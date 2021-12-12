@@ -9,7 +9,7 @@ cmake_minimum_required(VERSION 3.10.2)
 include_directories(ffmpeg/include)
 include_directories(person)
 
-project("jnidemo")
+project("audio")
 
 # Creates and names a library, sets it as either STATIC
 # or SHARED, and provides the relative paths to its source code.
@@ -24,24 +24,6 @@ add_library( # Sets the name of the library.
 
              # Provides a relative path to your source file(s).
         native-lib.c)
-
-add_library( # Sets the name of the library.
-        hello
-
-        # Sets the library as a shared library.
-        SHARED
-
-        # Provides a relative path to your source file(s).
-        hello.cpp)
-
-add_library( # Sets the name of the library.
-        native-audio
-
-        # Sets the library as a shared library.
-        SHARED
-
-        # Provides a relative path to your source file(s).
-        native-audio.cpp)
 
 add_library( # Sets the name of the library.
         native-util
@@ -60,6 +42,7 @@ add_library( # Sets the name of the library.
 
         # Provides a relative path to your source file(s).
         native-cutil.c )
+
 
 add_library( # Sets the name of the library.
         native-audio-filter
@@ -89,22 +72,13 @@ add_library( # Sets the name of the library.
         native-audio-encoder.c )
 
 add_library( # Sets the name of the library.
-        OpenSLESRecord
+        native-recorder
 
         # Sets the library as a shared library.
         SHARED
 
         # Provides a relative path to your source file(s).
-        OpenSLESRecord)
-
-add_library( # Sets the name of the library.
-        RecordBuffer
-
-        # Sets the library as a shared library.
-        SHARED
-
-        # Provides a relative path to your source file(s).
-        RecordBuffer.cpp)
+        native-recorder.c)
 
 add_library(fdk-aac
         SHARED
@@ -201,31 +175,16 @@ find_library( # Sets the name of the path variable.
 # Specifies libraries CMake should link to your target library. You
 # can link multiple libraries, such as libraries you define in this
 # build script, prebuilt third-party libraries, or system libraries.
-
-target_link_libraries( # Specifies the target library.
-                        native-audio
-                       # Links the target library to the log library
-                       # included in the NDK.
-                       ${log-lib} )
 target_link_libraries( # Specifies the target library.
         native-util
         # Links the target library to the log library
         # included in the NDK.
         ${log-lib} )
 
-target_link_libraries(OpenSLESRecord
+target_link_libraries(native-recorder
         OpenSLES)
-
-target_link_libraries(OpenSLESRecord
-        RecordBuffer)
-
 target_link_libraries( # Specifies the target library.
-        native-audio
-        # Links the target library to the log library
-        # included in the NDK.
-        OpenSLESRecord )
-target_link_libraries( # Specifies the target library.
-        OpenSLESRecord
+        native-recorder
         # Links the target library to the log library
         # included in the NDK.
         ${log-lib} )

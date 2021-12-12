@@ -1,3 +1,4 @@
 rootProject.name = "Audio"
 include ':app'
+include ':base'
 include ':BinMedia'

@@ -291,42 +291,42 @@ void play_music(){
 //    play(&mutex,&playFinish,&decodeFinish);
 }
 
-JNIEXPORT jstring JNICALL Java_com_example_jnidemo_MainActivity_stringFromJNI(
-        JNIEnv* env,
-        jobject clazz ,jstring in,jstring out) {
-    const char* hello =  (*env)->GetStringUTFChars(env,in,0);
-    //encoder();
-    pthread_t sourceT;
-//
+//JNIEXPORT jstring JNICALL Java_com_example_jnidemo_MainActivity_stringFromJNI(
+//        JNIEnv* env,
+//        jobject clazz ,jstring in,jstring out) {
+//    const char* hello =  (*env)->GetStringUTFChars(env,in,0);
+//    //encoder();
+//    pthread_t sourceT;
+////
+////    pthread_mutex_init(&mutex,NULL);
+////    pthread_cond_init(&decodeFinish,NULL);
+////    pthread_cond_init(&playFinish,NULL);
 //    pthread_mutex_init(&mutex,NULL);
 //    pthread_cond_init(&decodeFinish,NULL);
 //    pthread_cond_init(&playFinish,NULL);
-    pthread_mutex_init(&mutex,NULL);
-    pthread_cond_init(&decodeFinish,NULL);
-    pthread_cond_init(&playFinish,NULL);
-    createEngine();
-    getAudioInfo(hello);
-    play(&mutex,&playFinish,&decodeFinish);
-//    encoder_init();
-    //audioFifo  = av_audio_fifo_alloc(AV_SAMPLE_FMT_S16, 2, 1024);
-    if (audioFifo==NULL){
-        LOGE("audioFifo failed");
-    }
-    play_music();
-    const char *filename="/storage/emulated/0/Android/data/com.example.jnidemo/cache/ccc.aac";
-    outfile = fopen(filename, "wb");
 //    createEngine();
+//    getAudioInfo(hello);
 //    play(&mutex,&playFinish,&decodeFinish);
-    av_log_set_callback(log_callback_test2);
-    int ret=init_filter();
-    if (ret<0){
-        return (*env)->NewStringUTF(env,hello);
-    }
-
-    pthread_create(&sourceT, NULL, (void *(*)(void *)) sourceThread, (void *)hello);
-    (*env)->ReleaseStringUTFChars(env,in,hello);
-    return (*env)->NewStringUTF(env,"ccc");
-}
+////    encoder_init();
+//    //audioFifo  = av_audio_fifo_alloc(AV_SAMPLE_FMT_S16, 2, 1024);
+//    if (audioFifo==NULL){
+//        LOGE("audioFifo failed");
+//    }
+//    play_music();
+//    const char *filename="/storage/emulated/0/Android/data/com.example.jnidemo/cache/ccc.aac";
+//    outfile = fopen(filename, "wb");
+////    createEngine();
+////    play(&mutex,&playFinish,&decodeFinish);
+//    av_log_set_callback(log_callback_test2);
+//    int ret=init_filter();
+//    if (ret<0){
+//        return (*env)->NewStringUTF(env,hello);
+//    }
+//
+//    pthread_create(&sourceT, NULL, (void *(*)(void *)) sourceThread, (void *)hello);
+//    (*env)->ReleaseStringUTFChars(env,in,hello);
+//    return (*env)->NewStringUTF(env,"ccc");
+//}
 
 
 JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* reserved){
