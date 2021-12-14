@@ -18,12 +18,14 @@ abstract class BaseActivity<VM:BaseViewModel,M:ViewDataBinding>:AppCompatActivit
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding=DataBindingUtil.setContentView(this, bindLayout())
+        binding.lifecycleOwner = this
         viewModel.showLoading.observe(this,{
             if (it)
                 showLoading()
             else hideLoading()
         })
         initView()
+        initViewModel()
     }
 
     fun showLoading(){

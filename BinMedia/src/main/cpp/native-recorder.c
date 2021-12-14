@@ -7,6 +7,7 @@
 
 #include <android/log.h>
 #include <SLES/OpenSLES_Android.h>
+#include <string.h>
 
 #define LOG_TAG "native-player"
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR,LOG_TAG ,__VA_ARGS__) // 定义LOGE类型
@@ -20,33 +21,105 @@ SLDataFormat_PCM slDataFormatPcm;
 
 uint8_t recordBuffer[RECORDER_SIZE];
 FILE * pcm_file;
-unsigned long frame_size;
+long frame_size;
+long file_size=0;
 unsigned long recorder_ms=0;
 unsigned  char play_status=0;//0 start 1 recording 2 pause 3 stop
 JavaVM* javaVm;
 jmethodID progressListenerId;
 jobject progressListenerObject;
+
+struct WAVE_HEADER {
+    //RIFF
+    char chunkID[4];
+    //long int 4字节 某个大小
+    unsigned long chunkSize;
+    //WAVE
+    char formate[4];
+};
+struct WAVE_FMT {
+    //fmt 注意最后有个空格
+    char subchunk1ID[4];
+    unsigned long subchunk1Size;
+    unsigned short audioFormatTag;
+    unsigned short numChannels;
+    unsigned long sampleRate;
+    unsigned long byteRate;
+    unsigned short blockAlign;
+    unsigned short bitPerSample;
+
+};
+struct WAVE_DATA {
+    char subchunk2Id[4];
+    unsigned long subchunk2Size;
+};
+
+
+int writeWaveHead(long pcmSize) {
+    int bits = slDataFormatPcm.bitsPerSample;
+    int channels = slDataFormatPcm.numChannels;
+    long sample_rate =(long)(slDataFormatPcm.samplesPerSec)/1000;
+    struct WAVE_HEADER   pcmHEADER;
+    struct WAVE_FMT   pcmFMT;
+    struct WAVE_DATA   pcmDATA;
+    fseek(pcm_file,0,SEEK_SET);
+    //WAVE_HEAD
+    memcpy(pcmHEADER.chunkID, "RIFF", strlen("RIFF"));
+    pcmHEADER.chunkSize = 36 + pcmSize;
+    memcpy(pcmHEADER.formate, "WAVE", strlen("WAVE"));
+    fwrite(&pcmHEADER, sizeof(pcmHEADER), 1, pcm_file);
+
+    //WAVE_FMT
+    pcmFMT.numChannels = channels;
+    pcmFMT.sampleRate = sample_rate;
+    pcmFMT.bitPerSample = bits;
+    pcmFMT.byteRate = sample_rate*channels *pcmFMT.bitPerSample / 8;
+    memcpy(pcmFMT.subchunk1ID, "fmt ", strlen("fmt "));
+    pcmFMT.subchunk1Size = 16;
+    pcmFMT.audioFormatTag = 1;
+    pcmFMT.blockAlign = channels*pcmFMT.bitPerSample / 8;
+    fwrite(&pcmFMT, sizeof(pcmFMT), 1, pcm_file);
+
+    //WAVE_DATA
+    memcpy(pcmDATA.subchunk2Id, "data", strlen("data"));
+    pcmDATA.subchunk2Size = pcmSize;
+    fwrite(&pcmDATA, sizeof(pcmDATA), 1, pcm_file);
+
+}
+
 static void RecordCallback(SLAndroidSimpleBufferQueueItf bufferQueue, void *context) {
     if (NULL==recorderRecorder)
         return;
 
     fwrite(recordBuffer, 1, RECORDER_SIZE, pcm_file);
 
+    frame_size+=(RECORDER_SIZE/((slDataFormatPcm.bitsPerSample/8)*slDataFormatPcm.numChannels));
+    file_size+=RECORDER_SIZE;
     if (play_status==3) {
+        writeWaveHead(file_size);
         (*recorderRecorder)->SetRecordState(recorderRecorder,SL_RECORDSTATE_STOPPED);
         fclose(pcm_file);
     } else if (play_status==2){
         (*recorderRecorder)->SetRecordState(recorderRecorder,SL_RECORDSTATE_PAUSED);
     }else if(play_status==1){
-        frame_size+=(RECORDER_SIZE/((slDataFormatPcm.bitsPerSample/8)*slDataFormatPcm.numChannels));
+
         recorder_ms=(frame_size)/(slDataFormatPcm.samplesPerSec/100000);
         JNIEnv* env= NULL;
+
+        (*javaVm)->AttachCurrentThread(javaVm,&env,NULL);
+
         int result=(*javaVm)->GetEnv((javaVm),(void **)&env,JNI_VERSION_1_4);
+
         if (result==JNI_OK){
             //LOGE("frame_size %lu recorder_ms%lu",frame_size,recorder_ms);
+
             (*env)->CallVoidMethod(env,progressListenerObject,progressListenerId,(jlong)recorder_ms);
         }
+
+        (*javaVm)->DetachCurrentThread(javaVm);
+
         (*bufferQueue)->Enqueue(bufferQueue,recordBuffer,RECORDER_SIZE);
+
     }
 }
 
@@ -192,12 +265,17 @@ JNIEXPORT void JNICALL
 Java_cn_zybwz_binmedia_OpenSLRecorder_start(JNIEnv *env, jobject thiz, jstring save_path) {
     frame_size=0;
     recorder_ms=0;
+    file_size=0;
     char *s=(*env)->GetStringUTFChars(env,save_path,0);
     pcm_file = fopen(s,"w+");
     if (pcm_file==NULL){
         LOGE("file open failed %s",s);
         return;
     }
+
+    char *emptyWaveBuff=(char*)malloc(44);
+    memset(emptyWaveBuff,0,44);
+    fwrite(emptyWaveBuff,1,44,pcm_file);
     SLresult sLresult = (*recorderBufferQueue)->Enqueue(recorderBufferQueue, recordBuffer,
                                                         RECORDER_SIZE);
     if (SL_RESULT_SUCCESS != sLresult) {
@@ -238,13 +316,16 @@ Java_cn_zybwz_binmedia_OpenSLRecorder_destroy(JNIEnv *env, jobject thiz) {
     recorderRecorder=NULL;
     recorderBufferQueue = NULL; //Buffer接口
     (*env)->DeleteGlobalRef(env,progressListenerObject);
-    fclose(pcm_file);
+    if (pcm_file!=NULL)
+        fclose(pcm_file);
 }
 
 JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* reserved){
     javaVm = vm;
     return JNI_VERSION_1_4;
 }
+
+
 
 
 
