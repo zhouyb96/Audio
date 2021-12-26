@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="normal">#1890ff</color>
+    <color name="success">#52c41a</color>
+    <color name="warn">#faad14</color>
+    <color name="danger">#f5222d</color>
+    <color name="tran">#00000000</color>
+</resources>

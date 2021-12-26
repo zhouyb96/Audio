@@ -54,6 +54,15 @@ add_library( # Sets the name of the library.
         native-audio-filter.c )
 
 add_library( # Sets the name of the library.
+        native-audio-decoder
+
+        # Sets the library as a shared library.
+        SHARED
+
+        # Provides a relative path to your source file(s).
+        native-audio-decoder.c )
+
+add_library( # Sets the name of the library.
         native-player
 
         # Sets the library as a shared library.
@@ -79,6 +88,15 @@ add_library( # Sets the name of the library.
 
         # Provides a relative path to your source file(s).
         native-recorder.c)
+
+add_library( # Sets the name of the library.
+        audio_cache_pool
+
+        # Sets the library as a shared library.
+        SHARED
+
+        # Provides a relative path to your source file(s).
+        audio_cache_pool.c )
 
 add_library(fdk-aac
         SHARED
@@ -226,6 +244,22 @@ target_link_libraries( # Specifies the target library.
 
 target_link_libraries( # Specifies the target library.
         native-audio-encoder
+        # Links the target library to the log library
+        # included in the NDK.
+        fdk-aac
+        mp3lame
+        avcodec
+        avutil
+        avformat
+        swresample
+        postproc
+        swscale
+        avfilter
+        ${log-lib}
+        )
+
+target_link_libraries( # Specidefies the target library.
+        native-audio-decoder
         # Links the target library to the log library
         # included in the NDK.
         fdk-aac

@@ -97,6 +97,20 @@ static void RecordCallback(SLAndroidSimpleBufferQueueItf bufferQueue, void *cont
     file_size+=RECORDER_SIZE;
     if (play_status==3) {
         writeWaveHead(file_size);
+        JNIEnv* env= NULL;
+
+        (*javaVm)->AttachCurrentThread(javaVm,&env,NULL);
+
+        int result=(*javaVm)->GetEnv((javaVm),(void **)&env,JNI_VERSION_1_4);
+
+        if (result==JNI_OK){
+            //LOGE("frame_size %lu recorder_ms%lu",frame_size,recorder_ms);
+
+            (*env)->CallVoidMethod(env,progressListenerObject,progressListenerId,(jlong)recorder_ms);
+        }
+
+        (*javaVm)->DetachCurrentThread(javaVm);
+
         (*recorderRecorder)->SetRecordState(recorderRecorder,SL_RECORDSTATE_STOPPED);
         fclose(pcm_file);
     } else if (play_status==2){

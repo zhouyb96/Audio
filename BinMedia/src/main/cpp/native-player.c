@@ -173,9 +173,7 @@ void createPlayer(int channels,long rate,int bitFormat) {
     }
     LOGE("创建播放器成功...");
 }
-short *getQueenBuffer(){
-    return playBuffer;
-}
+
 
 short * play(pthread_mutex_t* m,pthread_cond_t* p,pthread_cond_t* d){
     mutex=m;
@@ -194,10 +192,6 @@ short * play(pthread_mutex_t* m,pthread_cond_t* p,pthread_cond_t* d){
 
 void send2PlayBuffer(uint8_t * buffer,int offset,unsigned int size){
     memcpy(playBuffer+offset,buffer,size);
-}
-
-uint8_t *getPlayQueenBuffer(){
-    return playBuffer;
 }
 
 void stop(){

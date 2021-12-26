@@ -1,21 +1,27 @@
-package cn.zybwz.audio
+package cn.zybwz.audio.ui
 
-import android.os.Bundle
+import android.content.Intent
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import android.view.View
 import androidx.activity.viewModels
+import cn.zybwz.audio.R
+import cn.zybwz.audio.bean.RecordBean
 import cn.zybwz.audio.databinding.ActivityMainBinding
+import cn.zybwz.audio.ui.recordfiles.RecordFilesActivity
 import cn.zybwz.audio.utils.ms2Format
 import cn.zybwz.base.BaseActivity
 import cn.zybwz.binmedia.OpenSLRecorder
+import java.text.SimpleDateFormat
 import java.util.*
 
 
-class MainActivity : BaseActivity<MainActivityVM,ActivityMainBinding>(),IMainActivityEvent{
+class MainActivity : BaseActivity<MainActivityVM,ActivityMainBinding>(), IMainActivityEvent {
     private lateinit var openSLRecorder:OpenSLRecorder
     override val viewModel: MainActivityVM by viewModels()
+    private var currentRecord=RecordBean()
+    private val simpleDateFormat= SimpleDateFormat("yyyyMMdd_hhmmss")
 
     override fun bindLayout(): Int = R.layout.activity_main
 
@@ -24,10 +30,19 @@ class MainActivity : BaseActivity<MainActivityVM,ActivityMainBinding>(),IMainAct
             Log.e(TAG, "initViewModel: $it", )
             when(it){
                 0->{
-                    openSLRecorder.stop()
+                    if (currentRecord.path.isNotEmpty()){
+                        openSLRecorder.stop()
+                        viewModel.insertRecord(currentRecord)
+                    }
                 }
                 1->{
-                    val path=applicationContext.getExternalFilesDir("recorder")?.path+"/"+Date().time+".wav"
+                    currentRecord= RecordBean()
+                    val date = Date().time
+                    val name = "${simpleDateFormat.format(date)}.wav"
+                    val path=applicationContext.getExternalFilesDir("recorder")?.path+"/"+name
+                    currentRecord.name=name
+                    currentRecord.path=path
+                    currentRecord.date=date
                     openSLRecorder.start(path)
                     binding.tvPauseResume.text="暂停"
                     binding.ivPauseResume.background=getDrawable(R.drawable.ic_pause)
@@ -55,10 +70,12 @@ class MainActivity : BaseActivity<MainActivityVM,ActivityMainBinding>(),IMainAct
         openSLRecorder.init()
         openSLRecorder.addProgressListener {
             Handler(Looper.getMainLooper()).post {
+                currentRecord.duration=it
+                binding.waveView.setCurrentTime(it*10)
                 binding.tvRecorderMs.text=ms2Format(it)
             }
-
         }
+
     }
 
     override fun onStartOrStop(view: View) {
@@ -77,8 +94,14 @@ class MainActivity : BaseActivity<MainActivityVM,ActivityMainBinding>(),IMainAct
         }
     }
 
+    override fun onRecordFile(view: View) {
+        startActivity(Intent(this,RecordFilesActivity::class.java))
+    }
+
     override fun onDestroy() {
         openSLRecorder.destroy()
         super.onDestroy()
     }
+
+    override fun titleBar(): View =binding.root
 }
