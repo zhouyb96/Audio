@@ -38,6 +38,7 @@ abstract class BaseActivity<VM:BaseViewModel,M:ViewDataBinding>:AppCompatActivit
                 showLoading()
             else hideLoading()
         })
+        initData()
         initView()
         initViewModel()
     }
@@ -53,5 +54,7 @@ abstract class BaseActivity<VM:BaseViewModel,M:ViewDataBinding>:AppCompatActivit
     abstract fun initViewModel()
 
     abstract fun initView()
+
+    abstract fun initData()
 
 }

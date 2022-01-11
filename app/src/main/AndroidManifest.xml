@@ -12,7 +12,8 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Audio">
-        <activity android:name=".ui.recordfiles.RecordFilesActivity"></activity>
+        <activity android:name=".ui.audioplay.AudioPlayActivity"></activity>
+        <activity android:name=".ui.recordfiles.RecordFilesActivity" />
         <activity
             android:name=".ui.MainActivity"
             android:exported="true">
@@ -22,14 +23,13 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
         <meta-data
             android:name="android.max_aspect"
-            android:value="2.4" />
-        <!--适配华为（huawei）刘海屏-->
+            android:value="2.4" /> <!-- 适配华为（huawei）刘海屏 -->
         <meta-data
             android:name="android.notch_support"
-            android:value="true"/>
-        <!--适配小米（xiaomi）刘海屏-->
+            android:value="true" /> <!-- 适配小米（xiaomi）刘海屏 -->
         <meta-data
             android:name="notch.config"
             android:value="portrait|landscape" />

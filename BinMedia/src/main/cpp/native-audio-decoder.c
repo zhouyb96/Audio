@@ -1,17 +1,23 @@
 //
-// Created by Administrator on 2021/12/17.
+// Created by dell on 2021/12/28.
 //
-#include <libavutil/opt.h>
-#include <libavutil/channel_layout.h>
-#include <libavutil/audio_fifo.h>
-#include <libavcodec/avcodec.h>
+
 #include "native-audio-decoder.h"
+#define LOG_TAG "NativeAudio"
+#define LOGE(...) __android_log_print(ANDROID_LOG_ERROR,LOG_TAG ,__VA_ARGS__) // 定义LOGE类型
+FILE *f;
+AVCodecContext *c= NULL;
+AVFrame *decoded_frame = NULL;
+int bufferInSize=0;
+AVPacket * pkt;
+AVFormatContext  * avFormatContext = NULL;
+AVRational time_base;
+unsigned char decoding=0;
+unsigned char is_planar=0;
 
-AVAudioFifo *audioFifo =NULL;
-unsigned char async=1;
-
-void decode_frame()
+void deal_packet()
 {
+    int i, ch;
     int ret;
     /* send the packet with the compressed data to the decoder */
     ret = avcodec_send_packet(c, pkt);
@@ -22,25 +28,90 @@ void decode_frame()
     /* read all the output frames (in general there may be any number of them */
     while (ret >= 0) {
         ret = avcodec_receive_frame(c, decoded_frame);
+
         if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF)
             return;
         else if (ret < 0) {
             LOGE("Error during decoding");
-            return;
+            exit(1);
         }
-        /*
-         * 给别人处理帧数据
-         */
+
+        int data_size = av_get_bytes_per_sample(c->sample_fmt);
+        if (data_size < 0) {
+            /* This should not occur, checking just for paranoia */
+            LOGE("Failed to calculate data size");
+            exit(1);
+        }
+
+        int s=data_size*c->channels*decoded_frame->nb_samples;
+        //LOGE("%d %d %d %d",data_size,c->channels,decoded_frame->nb_samples,s);
+        uint8_t *sendBuffer=(uint8_t *)malloc(s);
+
+        if (sendBuffer==NULL){
+            LOGE("BBB NULL");
+        }
+        if (is_planar){
+            for (i = 0; i < decoded_frame->nb_samples; i++){
+                for (ch = 0; ch < c->channels; ch++){
+                    uint8_t *src=decoded_frame->data[ch]+ data_size*i;
+                    if (src!=NULL){
+                        memcpy(sendBuffer+bufferInSize,src,data_size);
+                        bufferInSize+=data_size;
+                    }
+                }
+            }
+        } else{
+            memcpy(sendBuffer,decoded_frame->data[0],s);
+        }
+        send_frame(sendBuffer,s);
+        free(sendBuffer);
     }
 }
 
+int decode_ready(AVCodecParameters* parameters){
+    const AVCodec *codec = NULL;
 
-int getAudioInfo(const char * filename){
-    AVFormatContext  * avFormatContext = NULL;
-    int open_ret = avformat_open_input(&avFormatContext,filename,NULL,NULL);
-    if (open_ret<0){
-        LOGE( "Could not open input file.");
+    pkt = av_packet_alloc();
+
+    /* find the MPEG audio decoder */
+    codec = avcodec_find_decoder(parameters->codec_id);
+
+    if (!codec) {
+        LOGE("Codec not found\n");
         return -1;
+    }
+    LOGE("codec %s",codec->name);
+    c = avcodec_alloc_context3(codec);
+
+    if (!c) {
+        LOGE("Could not allocate audio codec context\n");
+        return -1;
+    }
+
+    /* open it */
+    int ret=0;
+    char errbuf[256];
+    avcodec_parameters_to_context(c,parameters);
+    if ((ret=avcodec_open2(c, codec, NULL)) < 0) {
+        av_strerror(ret, errbuf, 256);
+        LOGE("Could not open codec %s\n",errbuf);
+        return -1;
+    }
+    is_planar=av_sample_fmt_is_planar(c->sample_fmt);
+//    LOGE("TIMEBASE %d %d",c->time_base.num,c->time_base.den);
+//    c->time_base.den=AV_TIME_BASE ;
+//    c->time_base.num=1;
+//    LOGE("TIMEBASE %d %d",c->time_base.num,c->time_base.den);
+    time_base=c->time_base;
+    return 0;
+}
+
+int parse_audio_info(const char * filename){
+    int ret = avformat_open_input(&avFormatContext,filename,NULL,NULL);
+    LOGE("open_ret%d",ret);
+    if (ret<0){
+        LOGE( "Could not open input file.");
+        return ret;
     } else {
         avformat_find_stream_info(avFormatContext, NULL);
         int  audio_stream_idx = av_find_best_stream(avFormatContext,
@@ -51,158 +122,80 @@ int getAudioInfo(const char * filename){
                                                     0);
         if  (audio_stream_idx >= 0) {
             AVStream *audio_stream = avFormatContext->streams[audio_stream_idx];
-            audioInfo.decode_id = audio_stream->codecpar->codec_id;
-            audioInfo.channels=audio_stream->codecpar->channels;
-            audioInfo.channel_layout=audio_stream->codecpar->channel_layout;
-            audioInfo.sample_rate=audio_stream->codecpar->sample_rate;
-            audioInfo.bit_rate=av_get_bytes_per_sample(audio_stream->codecpar->format)*8;
-            return 0;
+            int channels=audio_stream->codecpar->channels;
+            ret=decode_ready(audio_stream->codecpar);
+            int64_t duration=audio_stream->duration;
+            int sample_rate=audio_stream->codecpar->sample_rate;
+            int bit_format=av_get_bytes_per_sample(audio_stream->codecpar->format)*8;
+            int64_t d=duration*av_q2d(time_base);
+            //createPlayer(channels,sample_rate,bit_format);
+            LOGE("bit %d %d %d %lld %lld %d",channels,sample_rate,bit_format,duration,d,AV_TIME_BASE );
+            fFmpegAudioInfo.bit_format=bit_format;
+            fFmpegAudioInfo.channels=channels;
+            fFmpegAudioInfo.bit_rate=sample_rate;
+            fFmpegAudioInfo.channel_layout=AV_CH_LAYOUT_STEREO;
+            fFmpegAudioInfo.duration=d;
         }
     }
-    avformat_free_context(avFormatContext);
-    return -2;
-}
 
-int decode_prepare(const AVCodec * codec,AVCodecParserContext *parser){
-    pkt = av_packet_alloc();
-    codec = avcodec_find_decoder(audioInfo.decode_id);
-    if (!codec) {
-        LOGE("Codec not found\n");
-        return -1;
-    }
-    parser = av_parser_init(codec->id);
-    if (!parser) {
-        LOGE("Parser not found\n");
-        return -1;
-    }
-
-    c = avcodec_alloc_context3(codec);
-
-    if (!c) {
-        LOGE("Could not allocate audio codec context\n");
-        return -1;
-    }
-
-    /* open it */
-
-    if (avcodec_open2(c, codec, NULL) < 0) {
-        LOGE("Could not open codec\n");
-        return -1;
-    }
-
-    if (!decoded_frame) {
-        LOGE("av_frame_alloc");
-        if (!(decoded_frame = av_frame_alloc())) {
-            LOGE("Could not allocate audio frame");
-            return 0;
-        }
-    }
-}
-
-void decode_finish(AVCodecParserContext *parser){
-    pkt->data = NULL;
-    pkt->size = 0;
-    decode_frame();
-    fclose(f);
-    avcodec_free_context(&c);
-    av_parser_close(parser);
-    av_frame_free(&decoded_frame);
-    av_packet_free(&pkt);
-}
-
-int decode_audio()
-{
-    const AVCodec *codec;
-    AVCodecParserContext *parser = NULL;
-    int len, ret;
-    uint8_t in_buff[AUDIO_INBUF_SIZE + AV_INPUT_BUFFER_PADDING_SIZE];
-    uint8_t *data;
-    size_t   data_size;
-
-    ret=decode_prepare(codec,parser);
-
-    LOGE("bit avcodec_open2 %d %d",c->sample_fmt,AV_SAMPLE_FMT_S16P);
-
-    if (ret<0)
-        return ret;
-    /* decode until eof */
-    data      = in_buff;
-    data_size = fread(in_buff, 1, AUDIO_INBUF_SIZE, f);
-    while (data_size > 0) {
-        if (async){
-            pthread_mutex_lock(&mutex);
-        }
-
-        ret = av_parser_parse2(parser, c, &pkt->data, &pkt->size,
-                               data, data_size,
-                               AV_NOPTS_VALUE, AV_NOPTS_VALUE, 0);
-        if (ret < 0) {
-            LOGE("Error while parsing");
-            break;
-        }
-        data      += ret;
-        data_size -= ret;
-        if (pkt->size){
-            decode_frame();
-            if (bufferInSize>0){
-                if (async)
-                    pthread_cond_broadcast(&decodeFinish);
-                bufferInSize=0;
-                if (async)
-                    pthread_cond_wait(&playFinish,&mutex);
-            }
-        }
-
-        if (data_size < AUDIO_REFILL_THRESH) {
-            memmove(in_buff, data, data_size);
-            data = in_buff;
-            len = fread(data + data_size, 1,
-                        AUDIO_INBUF_SIZE - data_size, f);
-            if (len > 0)
-                data_size += len;
-        }
-        if (async)
-            pthread_mutex_unlock(&mutex);
-    }
-    /* flush the decoder */
-    decode_finish(parser);
     return ret;
 }
 
-void* sourceThread(void * p){
-    char * filename = (char *)p;
-    f = fopen(filename, "rb");
-    if (!f) {
-        LOGE("Could not open %s\n", filename);
-        return 0;
+
+int decode()
+{
+    int ret;
+    decoding=1;
+    while (decoding) {
+        if (!decoded_frame) {
+            LOGE("av_frame_alloc");
+            if (!(decoded_frame = av_frame_alloc())) {
+                LOGE("Could not allocate audio frame");
+                return 0;
+            }
+        }
+        ret = av_read_frame(avFormatContext, pkt);
+
+        if (ret < 0)
+            break;
+        if (pkt->size){
+            deal_packet();
+        }
+        int64_t current=pkt->pts*(av_q2d(time_base))*1000;
+        //LOGE("current %lld %lld %lld %lld %d",current,pkt->pts,pkt->duration,pkt->dts,ret);
+        onProgress(current);
     }
-    decode_audio();
-//    pthread_mutex_destroy( &mutex );
-//    pthread_cond_destroy( &playFinish );
-//    pthread_cond_destroy( &decodeFinish );
+    send_frame(NULL,0);
+    avformat_free_context(avFormatContext);
+    avFormatContext=NULL;
+    avcodec_free_context(&c);
+    av_frame_free(&decoded_frame);
+    av_packet_free(&pkt);
+    return 0;
+}
+
+void intercept_decode(){
+    decoding=0;
+}
+
+void* sourceThread(void * p){
+    decode();
     pthread_exit(NULL);
 }
 
-void decode_get_bytes(char * bytes){
-    decode_buffer=bytes;
-    resultType=1;
+void seek(long time){
+    int64_t t=(int)((time/1000)*AV_TIME_BASE);
+    int ret=av_seek_frame(avFormatContext,-1,t,AVSEEK_FLAG_ANY );
+    char err[128];
+    av_make_error_string(err,128,ret);
 }
 
-void decode_get_frame(AVFrame *frame){
-    decoded_frame=frame;
-    resultType=0;
-}
-
-int decode_file(const char * file_path){
+int decode_audio(const char *file_name){
     pthread_t sourceT;
-    pthread_mutex_init(&mutex,NULL);
-    pthread_cond_init(&decodeFinish,NULL);
-    pthread_cond_init(&playFinish,NULL);
-    int res=getAudioInfo(file_path);
-    if (res<0){
-        LOGE("audioFifo failed");
-        return res;
-    }
-    pthread_create(&sourceT, NULL, (void *(*)(void *)) sourceThread, (void *)file_path);
+    LOGE("%s",file_name);
+    int ret=parse_audio_info(file_name);
+    if (ret<0)
+        return ret;
+    pthread_create(&sourceT, NULL, (void *(*)(void *)) sourceThread, (void *)NULL);
+    return 0;
 }
-

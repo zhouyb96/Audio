@@ -17,31 +17,14 @@ project("audio")
 # Gradle automatically packages shared libraries with your APK.
 
 add_library( # Sets the name of the library.
-             native-lib
+        native-audio-player
 
              # Sets the library as a shared library.
              SHARED
 
              # Provides a relative path to your source file(s).
-        native-lib.c)
+        native-audio-player.c)
 
-add_library( # Sets the name of the library.
-        native-util
-
-        # Sets the library as a shared library.
-        SHARED
-
-        # Provides a relative path to your source file(s).
-        native-util.cpp )
-
-add_library( # Sets the name of the library.
-        native-cutil
-
-        # Sets the library as a shared library.
-        SHARED
-
-        # Provides a relative path to your source file(s).
-        native-cutil.c )
 
 
 add_library( # Sets the name of the library.
@@ -63,13 +46,13 @@ add_library( # Sets the name of the library.
         native-audio-decoder.c )
 
 add_library( # Sets the name of the library.
-        native-player
+        opensl-player
 
         # Sets the library as a shared library.
         SHARED
 
         # Provides a relative path to your source file(s).
-        native-player.c )
+        opensl-player.c)
 
 add_library( # Sets the name of the library.
         native-audio-encoder
@@ -81,22 +64,23 @@ add_library( # Sets the name of the library.
         native-audio-encoder.c )
 
 add_library( # Sets the name of the library.
-        native-recorder
+        opensl-recorder
 
         # Sets the library as a shared library.
         SHARED
 
         # Provides a relative path to your source file(s).
-        native-recorder.c)
+        opensl-recorder.c)
+
 
 add_library( # Sets the name of the library.
-        audio_cache_pool
+        audio-cache-pool
 
         # Sets the library as a shared library.
         SHARED
 
         # Provides a relative path to your source file(s).
-        audio_cache_pool.c )
+        audio-cache-pool.c)
 
 add_library(fdk-aac
         SHARED
@@ -190,29 +174,26 @@ find_library( # Sets the name of the path variable.
               # you want CMake to locate.
               log )
 
-# Specifies libraries CMake should link to your target library. You
-# can link multiple libraries, such as libraries you define in this
-# build script, prebuilt third-party libraries, or system libraries.
 target_link_libraries( # Specifies the target library.
-        native-util
+        opensl-recorder
         # Links the target library to the log library
         # included in the NDK.
+        OpenSLES
         ${log-lib} )
 
-target_link_libraries(native-recorder
-        OpenSLES)
-target_link_libraries( # Specifies the target library.
-        native-recorder
-        # Links the target library to the log library
-        # included in the NDK.
-        ${log-lib} )
-target_link_libraries(native-player
-        OpenSLES)
+target_link_libraries(opensl-player
+        OpenSLES
+        ${log-lib}
+        audio-cache-pool
 
-target_link_libraries(native-player
-        ${log-lib})
+        )
+
+target_link_libraries(audio-cache-pool
+        ${log-lib}
+        )
+
 target_link_libraries( # Specifies the target library.
-        native-lib
+        native-audio-player
         # Links the target library to the log library
         # included in the NDK.
         avcodec
@@ -223,9 +204,9 @@ target_link_libraries( # Specifies the target library.
         swscale
         avfilter
         ${log-lib}
-        native-player
-        native-audio-filter
-        native-audio-encoder
+        opensl-player
+        native-audio-decoder
+        audio-cache-pool
         )
 
 target_link_libraries( # Specifies the target library.
@@ -272,4 +253,5 @@ target_link_libraries( # Specidefies the target library.
         swscale
         avfilter
         ${log-lib}
+        audio-cache-pool
         )

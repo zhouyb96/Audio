@@ -2,7 +2,7 @@ package cn.zybwz.binmedia;
 
 public class OpenSLRecorder {
     static {
-        System.loadLibrary("native-recorder");
+        System.loadLibrary("opensl-recorder");
     }
     public native void init();
 
@@ -26,6 +26,7 @@ public class OpenSLRecorder {
 
     public interface IProgressListener{
         void onProgress(long recorderMs);
+        void onWave(char db);
     }
 
     interface IStatusChangeListener{

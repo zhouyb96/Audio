@@ -50,6 +50,7 @@ class WaveView(context: Context,attributeSet: AttributeSet):View(context,attribu
         for (i in 0 .. 20){
             waveList.add(((i*10/2.00).toInt()))
         }
+        setBackgroundColor(Color.parseColor("#eeeeee"))
     }
 
     fun setCurrentTime(current:Long){
@@ -63,7 +64,7 @@ class WaveView(context: Context,attributeSet: AttributeSet):View(context,attribu
 
         drawBaseline(canvas)
         drawScaleText(canvas)
-        drawWave(canvas)
+        //drawWave(canvas)
     }
 
     private fun drawBaseline(canvas: Canvas?){

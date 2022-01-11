@@ -9,6 +9,7 @@ import java.text.SimpleDateFormat
 class RecordAdapter:BaseAdapter<RecordBean,ItemRecordBinding>() {
     override fun bindLayout(): Int = R.layout.item_record
     private val simpleDateFormat=SimpleDateFormat("yyyy年MM月dd日")
+    var itemClickListener:ItemClickListener?=null
 
     override fun onBindViewHolder(holder: BaseViewHolder<ItemRecordBinding>, position: Int) {
         val recordBean = dataList[position]
@@ -16,7 +17,7 @@ class RecordAdapter:BaseAdapter<RecordBean,ItemRecordBinding>() {
         holder.binding?.recordDuration?.text= ms2Format(recordBean.duration)
         holder.binding?.recordName?.text=recordBean.name
         holder.itemView.setOnClickListener {
-
+            itemClickListener?.onItemClick(position,recordBean)
         }
     }
 

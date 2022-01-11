@@ -16,25 +16,38 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <TextView
+        android:text="wav"
+        android:gravity="center"
+        android:id="@+id/tv_recorder_path"
+        android:layout_marginTop="50dp"
+        android:textColor="@color/black"
+        android:textSize="18sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
 
     <cn.zybwz.binmedia.widget.WaveView
         android:id="@+id/wave_view"
-        android:layout_marginTop="50dp"
-        app:layout_constraintTop_toTopOf="parent"
+        android:layout_marginTop="30dp"
+        app:layout_constraintTop_toBottomOf="@id/tv_recorder_path"
         android:layout_width="match_parent"
-        android:layout_height="100dp"/>
+        android:layout_height="200dp"/>
 
     <TextView
+        android:layout_marginTop="50dp"
         android:id="@+id/tv_recorder_ms"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="00:00.00"
         android:textColor="@color/black"
         android:textSize="32sp"
-        app:layout_constraintBottom_toBottomOf="parent"
+
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toBottomOf="@id/wave_view" />
 
     <LinearLayout
         android:onClick="@{event::onRecordFile}"

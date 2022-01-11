@@ -1,10 +1,12 @@
 package cn.zybwz.audio.ui
 
+import android.Manifest
 import android.content.Intent
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import android.view.View
+import android.widget.Toast
 import androidx.activity.viewModels
 import cn.zybwz.audio.R
 import cn.zybwz.audio.bean.RecordBean
@@ -13,6 +15,7 @@ import cn.zybwz.audio.ui.recordfiles.RecordFilesActivity
 import cn.zybwz.audio.utils.ms2Format
 import cn.zybwz.base.BaseActivity
 import cn.zybwz.binmedia.OpenSLRecorder
+import com.permissionx.guolindev.PermissionX
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -40,6 +43,7 @@ class MainActivity : BaseActivity<MainActivityVM,ActivityMainBinding>(), IMainAc
                     val date = Date().time
                     val name = "${simpleDateFormat.format(date)}.wav"
                     val path=applicationContext.getExternalFilesDir("recorder")?.path+"/"+name
+                    binding.tvRecorderPath.text=name
                     currentRecord.name=name
                     currentRecord.path=path
                     currentRecord.date=date
@@ -68,14 +72,34 @@ class MainActivity : BaseActivity<MainActivityVM,ActivityMainBinding>(), IMainAc
 
         openSLRecorder=OpenSLRecorder()
         openSLRecorder.init()
-        openSLRecorder.addProgressListener {
-            Handler(Looper.getMainLooper()).post {
-                currentRecord.duration=it
-                binding.waveView.setCurrentTime(it*10)
-                binding.tvRecorderMs.text=ms2Format(it)
+        openSLRecorder.addProgressListener (object : OpenSLRecorder.IProgressListener{
+            override fun onProgress(recorderMs: Long) {
+                Handler(Looper.getMainLooper()).post {
+                    currentRecord.duration=recorderMs
+                    binding.waveView.setCurrentTime(recorderMs*10)
+                    binding.tvRecorderMs.text=ms2Format(recorderMs)
+                }
             }
-        }
 
+            override fun onWave(db: Char) {
+
+            }
+
+        })
+        requestPermission()
+
+    }
+
+    private fun requestPermission(){
+        PermissionX.init(this)
+            .permissions(Manifest.permission.RECORD_AUDIO)
+            .request { allGranted, grantedList, deniedList ->
+                if (allGranted) {
+
+                } else {
+                    Toast.makeText(this, "These permissions are denied: $deniedList", Toast.LENGTH_LONG).show()
+                }
+            }
     }
 
     override fun onStartOrStop(view: View) {
@@ -104,4 +128,7 @@ class MainActivity : BaseActivity<MainActivityVM,ActivityMainBinding>(), IMainAc
     }
 
     override fun titleBar(): View =binding.root
+    override fun initData() {
+
+    }
 }

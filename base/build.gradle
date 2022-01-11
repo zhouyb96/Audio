@@ -71,4 +71,6 @@ dependencies {
 // kotlin扩展（可选）
     implementation 'com.gyf.immersionbar:immersionbar-ktx:3.0.0'
 
+    api 'com.guolindev.permissionx:permissionx:1.6.1'
+
 }

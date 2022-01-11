@@ -5,8 +5,11 @@ import androidx.activity.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import cn.zybwz.audio.R
 import cn.zybwz.audio.adapter.RecordAdapter
+import cn.zybwz.audio.bean.RecordBean
 import cn.zybwz.audio.databinding.ActivityRecordFilesBinding
+import cn.zybwz.audio.ui.audioplay.AudioPlayActivity
 import cn.zybwz.base.BaseActivity
+import cn.zybwz.binmedia.BinPlayer
 
 class RecordFilesActivity : BaseActivity<RecordFilesVM,ActivityRecordFilesBinding>(){
 
@@ -24,10 +27,20 @@ class RecordFilesActivity : BaseActivity<RecordFilesVM,ActivityRecordFilesBindin
     }
 
     override fun initView() {
+
         binding.recycler.layoutManager= LinearLayoutManager(this)
+        recordAdapter.itemClickListener=object : RecordAdapter.ItemClickListener{
+            override fun onItemClick(position: Int, recordBean: RecordBean) {
+                val tlbb="/storage/emulated/0/Android/data/cn.zybwz.audio/files/recorder/tlbb.mp3"
+                AudioPlayActivity.startActivity(this@RecordFilesActivity,recordBean)
+            }
+        }
         binding.recycler.adapter=recordAdapter
     }
 
     override fun titleBar(): View = binding.titleBar
+    override fun initData() {
+
+    }
 
 }
