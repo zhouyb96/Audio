@@ -12,9 +12,11 @@ import androidx.activity.viewModels
 import cn.zybwz.audio.R
 import cn.zybwz.audio.bean.RecordBean
 import cn.zybwz.audio.databinding.ActivityAudioPlayBinding
+import cn.zybwz.audio.ui.audioedit.crop.AudioCropActivity
 import cn.zybwz.audio.utils.ms2Format
 import cn.zybwz.base.BaseActivity
 import cn.zybwz.binmedia.BinPlayer
+import cn.zybwz.binmedia.FFmpegCmd
 import java.text.SimpleDateFormat
 
 class AudioPlayActivity : BaseActivity<AudioPlayActivityVM,ActivityAudioPlayBinding>(),IAudioPlayEvent {
@@ -56,8 +58,11 @@ class AudioPlayActivity : BaseActivity<AudioPlayActivityVM,ActivityAudioPlayBind
     }
 
     override fun onControl(view: View) {
+//        val fFmpegCmd = FFmpegCmd()
+//        fFmpegCmd.crop(audioBean.path,0,5,audioBean.path.replace(".mp3","crop.mp3"))
         when(viewModel.playStatusData.value){
             0->{
+                ///storage/emulated/0/Android/data/cn.zybwz.audio/files/recorder/tlbb.mp3
                 binPlayer.play(audioBean.path)
             }
             1->{
@@ -81,8 +86,11 @@ class AudioPlayActivity : BaseActivity<AudioPlayActivityVM,ActivityAudioPlayBind
 
         if (l>audioBean.duration*10)
             l=audioBean.duration*10
-
         binPlayer.seek(l)
+    }
+
+    override fun onCrop(view: View) {
+        AudioCropActivity.startActivity(this,audioBean)
     }
 
     private val playListener = object : BinPlayer.IStatusChangeListener {
@@ -122,7 +130,7 @@ class AudioPlayActivity : BaseActivity<AudioPlayActivityVM,ActivityAudioPlayBind
             Handler(Looper.getMainLooper()).post {
                 binding.tvPlayDuration.text=ms2Format(it/10)
                 binding.waveView.setCurrentTime(it)
-                currentDuration=it
+                currentDuration=it*10
             }
             //Log.e(TAG, "initData: $it")
         }

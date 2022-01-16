@@ -14,8 +14,10 @@ import cn.zybwz.audio.databinding.ActivityMainBinding
 import cn.zybwz.audio.ui.recordfiles.RecordFilesActivity
 import cn.zybwz.audio.utils.ms2Format
 import cn.zybwz.base.BaseActivity
+import cn.zybwz.binmedia.FFmpegCmd
 import cn.zybwz.binmedia.OpenSLRecorder
 import com.permissionx.guolindev.PermissionX
+import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -35,15 +37,22 @@ class MainActivity : BaseActivity<MainActivityVM,ActivityMainBinding>(), IMainAc
                 0->{
                     if (currentRecord.path.isNotEmpty()){
                         openSLRecorder.stop()
+
+                        val fFmpegCmd = FFmpegCmd()
+                        val replace = currentRecord.path.replace(".pcm", ".mp3")
+                        fFmpegCmd.pcm2Mp3(currentRecord.path,replace)
+//                        File(currentRecord.path).delete()
+                        currentRecord.name=currentRecord.name.replace(".pcm", ".mp3")
+                        currentRecord.path=replace
                         viewModel.insertRecord(currentRecord)
                     }
                 }
                 1->{
                     currentRecord= RecordBean()
                     val date = Date().time
-                    val name = "${simpleDateFormat.format(date)}.wav"
+                    val name = "${simpleDateFormat.format(date)}.pcm"
                     val path=applicationContext.getExternalFilesDir("recorder")?.path+"/"+name
-                    binding.tvRecorderPath.text=name
+                    binding.tvRecorderPath.text=name.replace(".pcm", ".mp3")
                     currentRecord.name=name
                     currentRecord.path=path
                     currentRecord.date=date

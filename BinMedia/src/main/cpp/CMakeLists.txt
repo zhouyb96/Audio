@@ -4,17 +4,11 @@
 # Sets the minimum version of CMake required to build the native library.
 
 cmake_minimum_required(VERSION 3.10.2)
-
+project("audio")
 # Declares and names the project.
 include_directories(ffmpeg/include)
 include_directories(person)
-
-project("audio")
-
-# Creates and names a library, sets it as either STATIC
-# or SHARED, and provides the relative paths to its source code.
-# You can define multiple libraries, and CMake builds them for you.
-# Gradle automatically packages shared libraries with your APK.
+include_directories(ffmpeg/fftools)
 
 add_library( # Sets the name of the library.
         native-audio-player
@@ -81,6 +75,37 @@ add_library( # Sets the name of the library.
 
         # Provides a relative path to your source file(s).
         audio-cache-pool.c)
+
+add_library( # Sets the name of the library.
+        ffmpeg-cmd
+
+        # Sets the library as a shared library.
+        SHARED
+
+        # Provides a relative path to your source file(s).
+        ffmpeg/fftools/cmdutils.c
+        ffmpeg/fftools/ffmpeg.c
+        ffmpeg/fftools/ffmpeg_opt.c
+        ffmpeg/fftools/ffmpeg_filter.c
+        ffmpeg/fftools/ffmpeg_hw.c
+        ffmpeg-cmd.c
+        )
+
+target_link_libraries( # Specidefies the target library.
+        ffmpeg-cmd
+        # Links the target library to the log library
+        # included in the NDK.
+        fdk-aac
+        mp3lame
+        avdevice
+        postproc
+        avfilter
+        avformat
+        avcodec
+        avutil
+        swresample
+        swscale
+        )
 
 add_library(fdk-aac
         SHARED
@@ -160,6 +185,13 @@ set_target_properties( avfilter
         PROPERTIES IMPORTED_LOCATION
         ${PROJECT_SOURCE_DIR}/ffmpeg/${ANDROID_ABI}/libavfilter.so)
 
+add_library( avdevice
+        SHARED
+        IMPORTED)
+
+set_target_properties( avdevice
+        PROPERTIES IMPORTED_LOCATION
+        ${PROJECT_SOURCE_DIR}/ffmpeg/${ANDROID_ABI}/libavdevice.so)
 
 # Searches for a specified prebuilt library and stores the path as a
 # variable. Because CMake includes system libraries in the search path by
@@ -254,4 +286,21 @@ target_link_libraries( # Specidefies the target library.
         avfilter
         ${log-lib}
         audio-cache-pool
+        )
+
+target_link_libraries( # Specidefies the target library.
+        ffmpeg-cmd
+        # Links the target library to the log library
+        # included in the NDK.
+        fdk-aac
+        mp3lame
+        avdevice
+        postproc
+        avfilter
+        avformat
+        avcodec
+        avutil
+        swresample
+        swscale
+        ${log-lib}
         )

@@ -10,7 +10,7 @@ import android.view.View
 import java.util.ArrayList
 
 
-class WaveView(context: Context,attributeSet: AttributeSet):View(context,attributeSet){
+open class WaveView(context: Context,attributeSet: AttributeSet):View(context,attributeSet){
     companion object{
         const val TYPE_RECORDING=0;
         const val TYPE_PLAYING=1;

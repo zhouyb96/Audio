@@ -19,9 +19,6 @@
 #ifndef AVUTIL_HWCONTEXT_VULKAN_H
 #define AVUTIL_HWCONTEXT_VULKAN_H
 
-#if defined(_WIN32) && !defined(VK_USE_PLATFORM_WIN32_KHR)
-#define VK_USE_PLATFORM_WIN32_KHR
-#endif
 #include <vulkan/vulkan.h>
 
 #include "pixfmt.h"
@@ -44,37 +41,43 @@ typedef struct AVVulkanDeviceContext {
      * Custom memory allocator, else NULL
      */
     const VkAllocationCallbacks *alloc;
-
     /**
-     * Pointer to the instance-provided vkGetInstanceProcAddr loading function.
-     * If NULL, will pick either libvulkan or libvolk, depending on libavutil's
-     * compilation settings, and set this field.
-     */
-    PFN_vkGetInstanceProcAddr get_proc_addr;
-
-    /**
-     * Vulkan instance. Must be at least version 1.2.
+     * Vulkan instance. Must be at least version 1.1.
      */
     VkInstance inst;
-
     /**
      * Physical device
      */
     VkPhysicalDevice phys_dev;
-
     /**
      * Active device
      */
     VkDevice act_dev;
-
     /**
-     * This structure should be set to the set of features that present and enabled
-     * during device creation. When a device is created by FFmpeg, it will default to
-     * enabling all that are present of the shaderImageGatherExtended,
-     * fragmentStoresAndAtomics, shaderInt64 and vertexPipelineStoresAndAtomics features.
+     * Queue family index for graphics
+     * @note av_hwdevice_create() will set all 3 queue indices if unset
+     * If there is no dedicated queue for compute or transfer operations,
+     * they will be set to the graphics queue index which can handle both.
+     * nb_graphics_queues indicates how many queues were enabled for the
+     * graphics queue (must be at least 1)
      */
-    VkPhysicalDeviceFeatures2 device_features;
-
+    int queue_family_index;
+    int nb_graphics_queues;
+    /**
+     * Queue family index to use for transfer operations, and the amount of queues
+     * enabled. In case there is no dedicated transfer queue, nb_tx_queues
+     * must be 0 and queue_family_tx_index must be the same as either the graphics
+     * queue or the compute queue, if available.
+     */
+    int queue_family_tx_index;
+    int nb_tx_queues;
+    /**
+     * Queue family index for compute ops, and the amount of queues enabled.
+     * In case there are no dedicated compute queues, nb_comp_queues must be
+     * 0 and its queue family index must be set to the graphics queue.
+     */
+    int queue_family_comp_index;
+    int nb_comp_queues;
     /**
      * Enabled instance extensions.
      * If supplying your own device context, set this to an array of strings, with
@@ -84,7 +87,6 @@ typedef struct AVVulkanDeviceContext {
      */
     const char * const *enabled_inst_extensions;
     int nb_enabled_inst_extensions;
-
     /**
      * Enabled device extensions. By default, VK_KHR_external_memory_fd,
      * VK_EXT_external_memory_dma_buf, VK_EXT_image_drm_format_modifier,
@@ -95,46 +97,13 @@ typedef struct AVVulkanDeviceContext {
      */
     const char * const *enabled_dev_extensions;
     int nb_enabled_dev_extensions;
-
     /**
-     * Queue family index for graphics operations, and the number of queues
-     * enabled for it. If unavaiable, will be set to -1. Not required.
-     * av_hwdevice_create() will attempt to find a dedicated queue for each
-     * queue family, or pick the one with the least unrelated flags set.
-     * Queue indices here may overlap if a queue has to share capabilities.
+     * This structure should be set to the set of features that present and enabled
+     * during device creation. When a device is created by FFmpeg, it will default to
+     * enabling all that are present of the shaderImageGatherExtended,
+     * fragmentStoresAndAtomics, shaderInt64 and vertexPipelineStoresAndAtomics features.
      */
-    int queue_family_index;
-    int nb_graphics_queues;
-
-    /**
-     * Queue family index for transfer operations and the number of queues
-     * enabled. Required.
-     */
-    int queue_family_tx_index;
-    int nb_tx_queues;
-
-    /**
-     * Queue family index for compute operations and the number of queues
-     * enabled. Required.
-     */
-    int queue_family_comp_index;
-    int nb_comp_queues;
-
-    /**
-     * Queue family index for video encode ops, and the amount of queues enabled.
-     * If the device doesn't support such, queue_family_encode_index will be -1.
-     * Not required.
-     */
-    int queue_family_encode_index;
-    int nb_encode_queues;
-
-    /**
-     * Queue family index for video decode ops, and the amount of queues enabled.
-     * If the device doesn't support such, queue_family_decode_index will be -1.
-     * Not required.
-     */
-    int queue_family_decode_index;
-    int nb_decode_queues;
+    VkPhysicalDeviceFeatures2 device_features;
 } AVVulkanDeviceContext;
 
 /**
@@ -145,18 +114,15 @@ typedef struct AVVulkanFramesContext {
      * Controls the tiling of allocated frames.
      */
     VkImageTiling tiling;
-
     /**
      * Defines extra usage of output frames. If left as 0, the following bits
      * are set: TRANSFER_SRC, TRANSFER_DST. SAMPLED and STORAGE.
      */
     VkImageUsageFlagBits usage;
-
     /**
      * Extension data for image creation.
      */
     void *create_pnext;
-
     /**
      * Extension data for memory allocation. Must have as many entries as
      * the number of planes of the sw_format.
@@ -173,7 +139,7 @@ typedef struct AVVulkanFramesContext {
  * All frames, imported or allocated, will be created with the
  * VK_IMAGE_CREATE_ALIAS_BIT flag set, so the memory may be aliased if needed.
  *
- * If all queue family indices in the device context are the same,
+ * If all three queue family indices in the device context are the same,
  * images will be created with the EXCLUSIVE sharing mode. Otherwise, all images
  * will be created using the CONCURRENT sharing mode.
  *
@@ -210,21 +176,12 @@ typedef struct AVVkFrame {
     VkImageLayout layout[AV_NUM_DATA_POINTERS];
 
     /**
-     * Synchronization timeline semaphores. Must not be freed manually.
-     * Must be waited on at every submission using the value in sem_value,
-     * and must be signalled at every submission, using an incremented value.
-     *
+     * Synchronization semaphores. Must not be freed manually. Must be waited on
+     * and signalled at every queue submission.
      * Could be less than the amount of images: either one per VkDeviceMemory
      * or one for the entire frame. All others will be set to VK_NULL_HANDLE.
      */
     VkSemaphore sem[AV_NUM_DATA_POINTERS];
-
-    /**
-     * Up to date semaphore value at which each image becomes accessible.
-     * Clients must wait on this value when submitting a command queue,
-     * and increment it when signalling.
-     */
-    uint64_t sem_value[AV_NUM_DATA_POINTERS];
 
     /**
      * Internal data.

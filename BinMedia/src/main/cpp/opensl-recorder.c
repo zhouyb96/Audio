@@ -86,7 +86,10 @@ int writeWaveHead(long pcmSize) {
     memcpy(pcmDATA.subchunk2Id, "data", strlen("data"));
     pcmDATA.subchunk2Size = pcmSize;
     fwrite(&pcmDATA, sizeof(pcmDATA), 1, pcm_file);
-
+//    fseek(pcm_file,0,SEEK_SET);
+//    char head[44];
+//    fread(head,44,1,pcm_file);
+//    LOGE("HEAD %s",head);
 }
 
 static void RecordCallback(SLAndroidSimpleBufferQueueItf bufferQueue, void *context) {
@@ -98,7 +101,8 @@ static void RecordCallback(SLAndroidSimpleBufferQueueItf bufferQueue, void *cont
     frame_size+=(RECORDER_SIZE/((slDataFormatPcm.bitsPerSample/8)*slDataFormatPcm.numChannels));
     file_size+=RECORDER_SIZE;
     if (play_status==3) {
-        writeWaveHead(file_size);
+        //writeWaveHead(file_size);
+        fclose(pcm_file);
         JNIEnv* env= NULL;
 
         (*javaVm)->AttachCurrentThread(javaVm,&env,NULL);
@@ -114,7 +118,7 @@ static void RecordCallback(SLAndroidSimpleBufferQueueItf bufferQueue, void *cont
         (*javaVm)->DetachCurrentThread(javaVm);
 
         (*recorderRecorder)->SetRecordState(recorderRecorder,SL_RECORDSTATE_STOPPED);
-        fclose(pcm_file);
+
     } else if (play_status==2){
         (*recorderRecorder)->SetRecordState(recorderRecorder,SL_RECORDSTATE_PAUSED);
     }else if(play_status==1){
@@ -290,9 +294,9 @@ Java_cn_zybwz_binmedia_OpenSLRecorder_start(JNIEnv *env, jobject thiz, jstring s
         return;
     }
 
-    char *emptyWaveBuff=(char*)malloc(44);
-    memset(emptyWaveBuff,0,44);
-    fwrite(emptyWaveBuff,1,44,pcm_file);
+//    char *emptyWaveBuff=(char*)malloc(44);
+//    memset(emptyWaveBuff,0,44);
+//    fwrite(emptyWaveBuff,1,44,pcm_file);
     SLresult sLresult = (*recorderBufferQueue)->Enqueue(recorderBufferQueue, recordBuffer,
                                                         RECORDER_SIZE);
     if (SL_RESULT_SUCCESS != sLresult) {

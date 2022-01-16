@@ -26,13 +26,9 @@ static void log_callback_test2(void *ptr, int level, const char *fmt, va_list vl
 
  JNIEXPORT void JNICALL
  Java_cn_zybwz_binmedia_BinPlayer_seek(JNIEnv *env, jobject thiz, jlong time) {
-    //opensl_stop();
-
     pool_seek();
-    seek((long)time);
-    // sleep(1);
+    seek((long )time);
     pool_seek_ok();
-//    opensl_resume();
 
 }
 

@@ -6,4 +6,6 @@ interface IAudioPlayEvent {
     fun onControl(view: View)
     fun onBack(view: View)
     fun onForward(view: View)
+
+    fun onCrop(view: View)
 }
