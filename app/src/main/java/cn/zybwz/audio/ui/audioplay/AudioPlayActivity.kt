@@ -17,14 +17,16 @@ import cn.zybwz.audio.utils.ms2Format
 import cn.zybwz.base.BaseActivity
 import cn.zybwz.binmedia.BinPlayer
 import cn.zybwz.binmedia.FFmpegCmd
+import cn.zybwz.binmedia.widget.WaveView
 import java.text.SimpleDateFormat
 
-class AudioPlayActivity : BaseActivity<AudioPlayActivityVM,ActivityAudioPlayBinding>(),IAudioPlayEvent {
+class AudioPlayActivity : BaseActivity<AudioPlayActivityVM,ActivityAudioPlayBinding>(),IAudioPlayEvent,IAudioEvent {
     private lateinit var audioBean: RecordBean
     private val simpleDateFormat= SimpleDateFormat("yyyy年MM月dd日")
     private val binPlayer = BinPlayer()
     override val viewModel: AudioPlayActivityVM by viewModels()
     private var currentDuration=0L
+    private var needSeek=false
     override fun bindLayout(): Int = R.layout.activity_audio_play
 
     override fun titleBar(): View? {
@@ -43,8 +45,28 @@ class AudioPlayActivity : BaseActivity<AudioPlayActivityVM,ActivityAudioPlayBind
         audioBean = s as RecordBean
         binding.tvTitle.text=audioBean.name
         binding.tvTime.text=simpleDateFormat.format(audioBean.date)
-        binding.tvTotalDuration.text= ms2Format(audioBean.duration)
+        binding.tvTotalDuration.text= ms2Format(audioBean.duration/10)
         binding.event=this
+        binding.waveView.setType(WaveView.TYPE_PLAYING)
+        binding.waveView.maxDuration=audioBean.duration
+        binding.waveView.touchEvent= object :WaveView.TouchEvent{
+            override fun onTouchDown() {
+                //binPlayer.pause()
+                if (viewModel.playStatusData.value==1)
+                    binPlayer.pause()
+            }
+
+            override fun onProgress(progress: Long) {
+                currentDuration=progress
+                binding.tvPlayDuration.text=ms2Format(progress/10)
+                needSeek=true
+            }
+
+            override fun onTouchUp() {
+
+            }
+
+        }
         binding.viewmodel=viewModel
     }
 
@@ -58,18 +80,24 @@ class AudioPlayActivity : BaseActivity<AudioPlayActivityVM,ActivityAudioPlayBind
     }
 
     override fun onControl(view: View) {
-//        val fFmpegCmd = FFmpegCmd()
-//        fFmpegCmd.crop(audioBean.path,0,5,audioBean.path.replace(".mp3","crop.mp3"))
         when(viewModel.playStatusData.value){
             0->{
                 ///storage/emulated/0/Android/data/cn.zybwz.audio/files/recorder/tlbb.mp3
                 binPlayer.play(audioBean.path)
+                if (needSeek){
+                    binPlayer.pause()
+                    binPlayer.seek(currentDuration)
+                    binPlayer.resume()
+                }
             }
             1->{
                 binPlayer.pause()
             }
             2->{
                 binPlayer.resume()
+                if (needSeek){
+                    binPlayer.seek(currentDuration)
+                }
             }
         }
     }
@@ -84,13 +112,25 @@ class AudioPlayActivity : BaseActivity<AudioPlayActivityVM,ActivityAudioPlayBind
     override fun onForward(view: View) {
         var l = currentDuration + 3000
 
-        if (l>audioBean.duration*10)
-            l=audioBean.duration*10
+        if (l>audioBean.duration)
+            l=audioBean.duration
         binPlayer.seek(l)
     }
 
     override fun onCrop(view: View) {
-        AudioCropActivity.startActivity(this,audioBean)
+
+    }
+
+    override fun onFilter(view: View) {
+
+    }
+
+    override fun onFade(view: View) {
+
+    }
+
+    override fun onFormat(view: View) {
+
     }
 
     private val playListener = object : BinPlayer.IStatusChangeListener {

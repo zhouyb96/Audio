@@ -14,6 +14,11 @@ public class BinPlayer {
     public native void addProgressListener(IProgressListener progressListener);
     public native void addStatusListener(IStatusChangeListener statusListener);
 
+    /**
+     * @param type
+     */
+    public native void addFilter(int type);
+
     public interface IProgressListener{
         void onProgress(long recorderMs);
     }

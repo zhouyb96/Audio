@@ -19,6 +19,7 @@ int init_filter_graph();
 void add_filter(AVFilterContext* avFilter);
 
 void remove_filter(AVFilterContext* avFilter);
+void remove_all_filter();
 
 int filterBuffer(uint8_t* buffer,AVFrame* decoded_frame,AVCodecContext *c);
 

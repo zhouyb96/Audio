@@ -28,5 +28,6 @@
 void seek(long time);
 int decode_audio(const char *file_name);
 void (*onProgress)(long ms);
+void (*deal_packet)(AVCodecContext *ctx,AVFrame *frame,AVPacket * packet);
 void intercept_decode();
 #endif //JNIDEMO_NATIVE_AUDIO_DECODE_H

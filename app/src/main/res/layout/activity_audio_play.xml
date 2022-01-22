@@ -89,45 +89,43 @@
         android:layout_height="wrap_content"/>
 
     <LinearLayout
+        android:id="@+id/linearLayout"
+        android:layout_width="match_parent"
+        android:layout_height="100dp"
         android:gravity="center"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tv_total_duration"
-        android:layout_width="match_parent"
-        android:layout_height="100dp">
+        app:layout_constraintTop_toBottomOf="@id/tv_total_duration">
+
         <ImageView
+            android:layout_width="36dp"
+            android:layout_height="36dp"
             android:layout_marginEnd="50dp"
-            android:onClick="@{event::onBack}"
             android:background="@drawable/fast_back"
-            android:layout_width="36dp"
-            android:layout_height="36dp"/>
+            android:onClick="@{event::onBack}" />
+
         <ImageView
-            android:onClick="@{event::onControl}"
-            android:background="@{viewmodel.playStatusData ==0||viewmodel.playStatusData ==2 ? @drawable/ic_play : @drawable/ic_pause }"
             android:layout_width="50dp"
-            android:layout_height="50dp"/>
+            android:layout_height="50dp"
+            android:background="@{viewmodel.playStatusData ==0||viewmodel.playStatusData ==2 ? @drawable/ic_play : @drawable/ic_pause }"
+            android:onClick="@{event::onControl}" />
+
         <ImageView
-            android:layout_marginStart="50dp"
-            android:onClick="@{event::onForward}"
-            android:background="@drawable/fast_forward"
             android:layout_width="36dp"
-            android:layout_height="36dp"/>
+            android:layout_height="36dp"
+            android:layout_marginStart="50dp"
+            android:background="@drawable/fast_forward"
+            android:onClick="@{event::onForward}" />
     </LinearLayout>
 
-    <LinearLayout
+    <FrameLayout
+        android:id="@+id/fragment"
         android:layout_width="match_parent"
-        android:layout_height="100dp"
+        android:layout_height="0dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent">
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/linearLayout"/>
 
-        <TextView
-            android:onClick="@{event::onCrop}"
-            android:gravity="center"
-            android:text="裁剪"
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_height="match_parent"/>
-    </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

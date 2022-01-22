@@ -4,6 +4,7 @@
 
 #include <libswresample/swresample.h>
 #include "native-audio-decoder.h"
+#include "native-audio-filter.h"
 #define LOG_TAG "NativeAudio"
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR,LOG_TAG ,__VA_ARGS__) // 定义LOGE类型
 FILE *f;
@@ -16,13 +17,21 @@ AVRational time_base;
 unsigned char decoding=0;
 unsigned char is_planar=0;
 SwrContext * swrContext;
-void deal_packet()
+long startTime=1000;
+long endTime=-1;
+
+void set_decode_duration(long start,long stop){
+    startTime=start;
+    endTime=stop;
+}
+
+void self_deal_packet(AVCodecContext *ctx,AVFrame *frame,AVPacket * packet)
 {
     int i, ch;
     int ret;
     char err[128];
     /* send the packet with the compressed data to the decoder */
-    ret = avcodec_send_packet(c, pkt);
+    ret = avcodec_send_packet(ctx, packet);
     if (ret < 0) {
         av_make_error_string(err,128,ret);
         LOGE("Error submitting the packet to the decoder%s",err);
@@ -30,7 +39,7 @@ void deal_packet()
     }
     /* read all the output frames (in general there may be any number of them */
     while (ret >= 0) {
-        ret = avcodec_receive_frame(c, decoded_frame);
+        ret = avcodec_receive_frame(ctx, frame);
 
         if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF){
             return;
@@ -40,20 +49,24 @@ void deal_packet()
             exit(1);
         }
 
-        int data_size = av_get_bytes_per_sample(c->sample_fmt);
+        int data_size = av_get_bytes_per_sample(ctx->sample_fmt);
         if (data_size < 0) {
             /* This should not occur, checking just for paranoia */
             LOGE("Failed to calculate data size");
             exit(1);
         }
 
-        int s=data_size*c->channels*decoded_frame->nb_samples;
+        int s=data_size*ctx->channels*frame->nb_samples;
         uint8_t *sendBuffer=(uint8_t *)malloc(s);
 
         if (sendBuffer==NULL){
             LOGE("BBB NULL");
         }
-        swr_convert(swrContext,&sendBuffer,s,(const uint8_t **)decoded_frame->data,decoded_frame->nb_samples);
+//        if (enableFilter){
+//            LOGE("enableFilter");
+//            filterBuffer(sendBuffer,frame,ctx);
+//        }
+        swr_convert(swrContext,&sendBuffer,s,(const uint8_t **)frame->data,frame->nb_samples);
 //        if (is_planar){
 //            for (i = 0; i < decoded_frame->nb_samples; i++){
 //                for (ch = 0; ch < c->channels; ch++){
@@ -67,11 +80,8 @@ void deal_packet()
 //        } else{
 //            memcpy(sendBuffer,decoded_frame->data[0],s);
 //        }
-        int64_t current=pkt->pts*(av_q2d(time_base))*1000;
-        onProgress(current);
         send_frame(sendBuffer,s);
         free(sendBuffer);
-        av_packet_unref(pkt);
     }
 }
 
@@ -104,11 +114,31 @@ int decode_ready(AVCodecParameters* parameters){
         LOGE("Could not open codec %s\n",errbuf);
         return -1;
     }
+    inResampleInfo.channel_layout= c->channel_layout;
+    inResampleInfo.fmt=c->sample_fmt;
+    inResampleInfo.sample_rate=c->sample_rate;
 
-    swrContext = swr_alloc_set_opts(NULL, parameters->channel_layout, AV_SAMPLE_FMT_S32, parameters->sample_rate,
-                                      c->channel_layout, c->sample_fmt, c->sample_rate,
-                                      0, NULL);
-    swr_init(swrContext);
+    outResampleInfo.channel_layout= parameters->channel_layout;
+    outResampleInfo.fmt=AV_SAMPLE_FMT_S32;
+    outResampleInfo.sample_rate=parameters->sample_rate;
+
+//    if (enableFilter){
+//        LOGE("enableFilter ---");
+//        //"in_gain=0.8:out_gain=0.9:delays=1000"
+//        AVFilterContext* avFilterContext=buildAVFilterContextStr("vibrato","");
+//        add_filter(avFilterContext);
+//    }
+    if (deal_packet==NULL){
+        deal_packet=self_deal_packet;
+        LOGE("P %ld  %s  %d C  %ld  %s  %d",parameters->channel_layout,av_get_sample_fmt_name(av_get_packed_sample_fmt(c->sample_fmt)),parameters->sample_rate,c->channel_layout, av_get_sample_fmt_name(c->sample_fmt), c->sample_rate);
+        swrContext = swr_alloc_set_opts(NULL, parameters->channel_layout, 2, parameters->sample_rate,
+                                        c->channel_layout, c->sample_fmt, c->sample_rate,
+                                        0, NULL);
+
+        swr_init(swrContext);
+    }
+
+
    // is_planar=av_sample_fmt_is_planar(c->sample_fmt);
 //    LOGE("TIMEBASE %d %d",c->time_base.num,c->time_base.den);
 //    c->time_base.den=AV_TIME_BASE ;
@@ -142,8 +172,9 @@ int parse_audio_info(const char * filename){
             int bit_format=av_get_bytes_per_sample(audio_stream->codecpar->format)*8;
             int64_t d=duration*av_q2d(time_base);
             //createPlayer(channels,sample_rate,bit_format);
-            //LOGE("bit %d %d %d %d %ld",channels,sample_rate,bit_format,audio_stream->time_base.den,d );
+           //LOGE("bit %d %d %d %d %ld",channels,sample_rate,bit_format,audio_stream->time_base.den,d );
             fFmpegAudioInfo.bit_format=bit_format;
+            fFmpegAudioInfo.av_fmt=audio_stream->codecpar->format;
             fFmpegAudioInfo.channels=channels;
             fFmpegAudioInfo.bit_rate=sample_rate;
             fFmpegAudioInfo.channel_layout=AV_CH_LAYOUT_STEREO;
@@ -171,7 +202,14 @@ int decode()
         if (ret < 0)
             break;
         if (pkt->size){
-            deal_packet();
+            deal_packet(c,decoded_frame,pkt);
+            int64_t current=pkt->pts*(av_q2d(time_base))*1000;
+            onProgress(current);
+            av_packet_unref(pkt);
+            if (endTime!=-1&&current>=endTime){
+                break;
+            }
+
         }
     }
     send_frame(NULL,0);
@@ -195,7 +233,7 @@ void* sourceThread(void * p){
 void seek(long time){
     int64_t t=(int64_t)((time/1000.00)*AV_TIME_BASE);
     LOGE("seek t%lld",t);
-    int ret=av_seek_frame(avFormatContext,-1,t,AVSEEK_FLAG_ANY );
+    av_seek_frame(avFormatContext,-1,t,AVSEEK_FLAG_ANY );
 
 }
 

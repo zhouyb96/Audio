@@ -23,4 +23,11 @@ class RecordFilesVM:BaseViewModel() {
             }
         }
     }
+
+    fun deleteRecord(recordBean: RecordBean){
+        viewModelScope.launch(Dispatchers.IO){
+            val deleteResult=AudioDataBase.getInstance().recordDao().deleteRecord(recordBean)
+            getAllRecords()
+        }
+    }
 }

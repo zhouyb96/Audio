@@ -19,10 +19,12 @@ open class WaveView(context: Context,attributeSet: AttributeSet):View(context,at
     private val baselinePaint=Paint()
     private val waveLinePaint=Paint()
     private var currentTime=0L
+    private var currentTimeBuck=0L
     private val pxTime=12000L
     private val largeScaleTime=2000L
     private var msPerPx:Double=0.00;
     private val scaleTextOffset=21*5/4
+    var maxDuration=0L
 
     private val waveList:ArrayList<Int> = ArrayList()
 
@@ -30,6 +32,7 @@ open class WaveView(context: Context,attributeSet: AttributeSet):View(context,at
 
     private var downX=0f
 
+    var touchEvent:TouchEvent?=null
 
     init {
         scaleTextPaint.color= Color.BLACK
@@ -56,6 +59,10 @@ open class WaveView(context: Context,attributeSet: AttributeSet):View(context,at
     fun setCurrentTime(current:Long){
         currentTime=current
         invalidate()
+    }
+
+    fun setType(type:Int){
+        this.type=type
     }
 
     override fun onDraw(canvas: Canvas?) {
@@ -102,16 +109,34 @@ open class WaveView(context: Context,attributeSet: AttributeSet):View(context,at
             val action = event?.action?:return super.onTouchEvent(event)
             when(action){
                 MotionEvent.ACTION_DOWN->{
+                    touchEvent?.onTouchDown()
                     downX=event.rawX
+                    currentTimeBuck=currentTime
                 }
                 MotionEvent.ACTION_MOVE->{
                     val moveX=event.rawX-downX
+                    var l = currentTimeBuck - (moveX / msPerPx).toLong()
+                    if (l>maxDuration)
+                        l=maxDuration
+                    else if (l<0)
+                        l=0
+                    currentTime=l
+                    touchEvent?.onProgress(currentTime)
+                    invalidate()
                 }
                 MotionEvent.ACTION_UP->{
-
+                    touchEvent?.onTouchUp()
                 }
             }
             return true
         }
+    }
+
+    interface TouchEvent{
+        fun onTouchDown()
+
+        fun onProgress(progress:Long)
+
+        fun onTouchUp()
     }
 }

@@ -15,6 +15,7 @@ import cn.zybwz.audio.utils.ms2Format
 import cn.zybwz.base.BaseActivity
 import cn.zybwz.binmedia.FFmpegCmd
 import cn.zybwz.binmedia.widget.CropView
+import java.util.*
 
 class AudioCropActivity : BaseActivity<AudioCropActivityVM,ActivityAudioCropBinding>(),IAudioCropEvent {
     private lateinit var audioBean: RecordBean
@@ -45,7 +46,7 @@ class AudioCropActivity : BaseActivity<AudioCropActivityVM,ActivityAudioCropBind
     override fun initView() {
         val s = intent.getSerializableExtra(PLAY_MUSIC)?:return
         audioBean = s as RecordBean
-        binding.cropView.setDuration(audioBean.duration*10)
+        binding.cropView.setDuration(audioBean.duration)
         binding.cropView.cropEvent = object : CropView.CropEvent{
             override fun onLeft(duration: Long) {
                 startTime=duration
@@ -59,7 +60,7 @@ class AudioCropActivity : BaseActivity<AudioCropActivityVM,ActivityAudioCropBind
 
         }
         binding.tvStart.text="开始\n"+ms2Format(0)
-        binding.tvEnd.text= "结束\n"+ms2Format(audioBean.duration)
+        binding.tvEnd.text= "结束\n"+ms2Format(audioBean.duration/10)
         binding.event=this
     }
 
@@ -69,6 +70,13 @@ class AudioCropActivity : BaseActivity<AudioCropActivityVM,ActivityAudioCropBind
 
     override fun onCrop(view: View) {
         val replace = audioBean.path.replace(".mp3", "crop.mp3")
-        fFmpegCmd.crop(audioBean.path,startTime,endTime-startTime,replace)
+        val l = endTime - startTime
+        fFmpegCmd.crop(audioBean.path,startTime, l,replace)
+        val recordBean = RecordBean()
+        recordBean.duration=l
+        recordBean.name=audioBean.name.replace(".mp3", "crop.mp3")
+        recordBean.path=replace
+        recordBean.date= Date().time
+        viewModel.insertRecord(recordBean)
     }
 }

@@ -8,8 +8,10 @@ import cn.zybwz.audio.adapter.RecordAdapter
 import cn.zybwz.audio.bean.RecordBean
 import cn.zybwz.audio.databinding.ActivityRecordFilesBinding
 import cn.zybwz.audio.ui.audioplay.AudioPlayActivity
+import cn.zybwz.audio.utils.FileUtils
 import cn.zybwz.base.BaseActivity
 import cn.zybwz.binmedia.BinPlayer
+import java.io.File
 
 class RecordFilesActivity : BaseActivity<RecordFilesVM,ActivityRecordFilesBinding>(){
 
@@ -33,6 +35,15 @@ class RecordFilesActivity : BaseActivity<RecordFilesVM,ActivityRecordFilesBindin
             override fun onItemClick(position: Int, recordBean: RecordBean) {
                 val tlbb="/storage/emulated/0/Android/data/cn.zybwz.audio/files/recorder/tlbb.mp3"
                 AudioPlayActivity.startActivity(this@RecordFilesActivity,recordBean)
+            }
+
+            override fun onItemDelete(position: Int, recordBean: RecordBean) {
+                FileUtils.deleteFile(recordBean.path)
+                viewModel.deleteRecord(recordBean)
+            }
+
+            override fun onItemLongClick(position: Int, recordBean: RecordBean) {
+
             }
         }
         binding.recycler.adapter=recordAdapter

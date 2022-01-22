@@ -12,6 +12,7 @@ import cn.zybwz.audio.R
 import cn.zybwz.audio.bean.RecordBean
 import cn.zybwz.audio.databinding.ActivityMainBinding
 import cn.zybwz.audio.ui.recordfiles.RecordFilesActivity
+import cn.zybwz.audio.utils.FileUtils
 import cn.zybwz.audio.utils.ms2Format
 import cn.zybwz.base.BaseActivity
 import cn.zybwz.binmedia.FFmpegCmd
@@ -41,7 +42,7 @@ class MainActivity : BaseActivity<MainActivityVM,ActivityMainBinding>(), IMainAc
                         val fFmpegCmd = FFmpegCmd()
                         val replace = currentRecord.path.replace(".pcm", ".mp3")
                         fFmpegCmd.pcm2Mp3(currentRecord.path,replace)
-//                        File(currentRecord.path).delete()
+                        FileUtils.deleteFile(currentRecord.path)
                         currentRecord.name=currentRecord.name.replace(".pcm", ".mp3")
                         currentRecord.path=replace
                         viewModel.insertRecord(currentRecord)
@@ -51,7 +52,7 @@ class MainActivity : BaseActivity<MainActivityVM,ActivityMainBinding>(), IMainAc
                     currentRecord= RecordBean()
                     val date = Date().time
                     val name = "${simpleDateFormat.format(date)}.pcm"
-                    val path=applicationContext.getExternalFilesDir("recorder")?.path+"/"+name
+                    val path=FileUtils.getRecorderPath()+"/"+name
                     binding.tvRecorderPath.text=name.replace(".pcm", ".mp3")
                     currentRecord.name=name
                     currentRecord.path=path
@@ -84,7 +85,7 @@ class MainActivity : BaseActivity<MainActivityVM,ActivityMainBinding>(), IMainAc
         openSLRecorder.addProgressListener (object : OpenSLRecorder.IProgressListener{
             override fun onProgress(recorderMs: Long) {
                 Handler(Looper.getMainLooper()).post {
-                    currentRecord.duration=recorderMs
+                    currentRecord.duration=recorderMs*10
                     binding.waveView.setCurrentTime(recorderMs*10)
                     binding.tvRecorderMs.text=ms2Format(recorderMs)
                 }

@@ -2,6 +2,9 @@ package cn.zybwz.binmedia;
 
 import static cn.zybwz.binmedia.UtilKt.ms2FFFormat;
 
+/**
+ * todo 缺少 进度 和 状态回调
+ */
 public class FFmpegCmd {
     private final String cropCmd="ffmpeg -i %s -ss %s -t %s -acodec copy %s";
     private final String pcm2Mp3="ffmpeg -f s16le -ar 44100 -ac 2 -i %s -ar 44100 -ac 2 -y %s";

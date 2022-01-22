@@ -6,5 +6,9 @@ import cn.zybwz.audio.db.AudioDataBase
 import cn.zybwz.base.BaseViewModel
 
 class AudioCropActivityVM:BaseViewModel() {
-
+    fun insertRecord(recordBean: RecordBean){
+        launchIo({
+            AudioDataBase.getInstance().recordDao().insertRecord(recordBean)
+        })
+    }
 }

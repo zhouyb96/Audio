@@ -7,8 +7,15 @@
 #include <libavcodec/avcodec.h>
 #include <android/log.h>
 #include "native-audio-filter.h"
+#include "native-audio-common.h"
 #define LOG_TAG "native-audio-filter"
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
+
+//char * getSrcInfo(){
+//    const char * srcInfoFormat= "sample_rate=%s:sample_fmt=s16p:channel_layout=stereo";
+//    char srcInfo[100];
+//    sprintf(srcInfo,srcInfoFormat,inResampleInfo.sample_rate);
+//}
 
 int init_filter_graph(){
     int err;
@@ -31,7 +38,7 @@ int init_filter_graph(){
     }
     src_filter_context = avfilter_graph_alloc_filter(av_filter_graph,src_filter,"src");
 
-    const char * srcInfo= "sample_rate=44100:sample_fmt=s16p:channel_layout=stereo";
+    const char * srcInfo= "sample_rate=44100:sample_fmt=fltp:channel_layout=stereo";
     if (avfilter_init_str(src_filter_context, srcInfo) <0) {
         LOGE("error init abuffer filter");
         return -1;
@@ -45,7 +52,7 @@ int init_filter_graph(){
         return AVERROR(ENOMEM);
     }
     //const char * sample_fmts=av_get_sample_fmt_name(AV_SAMPLE_FMT_S16);
-    const char * formatInfo= "sample_rates=44100:sample_fmts=s16p:channel_layouts=stereo";
+    const char * formatInfo= "sample_rates=44100:sample_fmts=fltp:channel_layouts=stereo";
     err = avfilter_init_str(format_ctx, formatInfo);
     if (err <0) {
         LOGE("error init aformat filter");
@@ -90,19 +97,69 @@ int init_filter_graph(){
     LOGE("init filter success");
     return 0;
 };
+static void log_callback_test2(void *ptr, int level, const char *fmt, va_list vl)
+{
+    va_list vl2;
+    char *line = malloc(128 * sizeof(char));
+    static int print_prefix = 1;
+    va_copy(vl2, vl);
+    av_log_format_line(ptr, level, fmt, vl2, line, 128, &print_prefix);
+    va_end(vl2);
+    line[127] = '\0';
+    LOGE("%s", line);
+    free(line);
+}
 
+/**
+ *
+ * @param name
+ * @return 0 有特效但是不存在该名称特效
+ *  1 特效存在
+ *  -1 没有任何特效
+ */
+unsigned char filter_exist(const char * name){
+    struct FilterNode* node=&filterNodes;
+    if (!node->thiz){
+        LOGE("没有任何特效");
+        return -1;
+    }
+    do {
+        int res=strcmp(node->thiz->name,name);
+        if (res>=0)
+            return 1;
+        node=node->next;
+    }while (node!=NULL);
+    return 0;
+}
+
+struct FilterNode * find_filter(const char * name){
+    struct FilterNode* node=&filterNodes;
+    do {
+        int res=strcmp(node->thiz->name,name);
+        if (res>=0)
+            return node;
+        node=node->next;
+    }while (node!=NULL);
+    return NULL;
+}
 AVFilterContext* buildAVFilterContextStr(const char * filter_name,const char * str){
     const AVFilter* base_filter;
     if (av_filter_graph==NULL)
         av_filter_graph = avfilter_graph_alloc();
+
     base_filter = avfilter_get_by_name(filter_name);
-    if (base_filter){
+    if (base_filter==0){
         LOGE("error get filter by name:%s",filter_name);
         return NULL;
     }
     AVFilterContext* base_filter_ctx = avfilter_graph_alloc_filter(av_filter_graph,base_filter,filter_name);
-    if (avfilter_init_str(base_filter_ctx, str) < 0) {
-        LOGE("error init volume filter");
+
+    if (base_filter_ctx<0){
+        return NULL;
+    }
+    int ret=avfilter_init_str(base_filter_ctx, str);
+    if (ret < 0) {
+        LOGE("error init volume filter ");
         return NULL;
     }
     return base_filter_ctx;
@@ -111,6 +168,10 @@ AVFilterContext* buildAVFilterContextStr(const char * filter_name,const char * s
 void add_filter(AVFilterContext* avFilter){
     struct FilterNode new_node={avFilter,NULL,NULL};
     struct FilterNode* node=&filterNodes;
+    struct FilterNode * filterNode=find_filter(avFilter->name);
+    if (filterNode){
+        remove_filter(filterNode->thiz);
+    }
     if (!node->thiz){
         filterNodes.thiz=avFilter;
         init_filter_graph();
@@ -123,6 +184,18 @@ void add_filter(AVFilterContext* avFilter){
     node->next=&new_node;
     init_filter_graph();
 };
+
+void remove_all_filter(){
+    struct FilterNode* node=&filterNodes;
+    if (!node->thiz){
+        LOGE("没有任何特效");
+        return;
+    }
+    node->thiz=NULL;
+    node->next=NULL;
+    node->pre=NULL;
+    init_filter_graph();
+}
 
 void remove_filter(AVFilterContext* avFilter){
     struct FilterNode* node=&filterNodes;
@@ -161,24 +234,11 @@ int filterBuffer(uint8_t* buffer,AVFrame* decoded_frame,AVCodecContext *c){
     int offset=0;
     int err = av_buffersrc_add_frame(src_filter_context, decoded_frame);
     if (err < 0) {
+        LOGE("av_frame_unref");
         av_frame_unref(decoded_frame);
         return 0;
     }
-    while ((err = av_buffersink_get_frame(sink_filter_context, decoded_frame)) >= 0) {
-        /* now do something with our filtered frame */
-        data_size = av_get_bytes_per_sample(c->sample_fmt);
-
-        if (data_size < 0) {
-            /* This should not occur, checking just for paranoia */
-            //LOGE("Failed to calculate data size");
-            exit(1);
-        }
-        for (i = 0; i < decoded_frame->nb_samples; i++)
-            for (ch = 0; ch < c->channels; ch++){
-                uint8_t *src=decoded_frame->data[ch]+ data_size*i;
-                memcpy(buffer+offset,src,sizeof(uint8_t)*data_size);
-                offset+=data_size;
-            }
-    }
+    LOGE("av_buffersink_get_frame");
+    av_buffersink_get_frame(sink_filter_context, decoded_frame);
     return offset;
 };

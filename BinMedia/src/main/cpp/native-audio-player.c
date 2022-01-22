@@ -85,6 +85,11 @@ Java_cn_zybwz_binmedia_BinPlayer_resume(JNIEnv *env, jobject thiz) {
     opensl_resume();
 }
 
+JNIEXPORT void JNICALL
+Java_cn_zybwz_binmedia_BinPlayer_addFilter(JNIEnv *env, jobject thiz, jint type) {
+
+}
+
 void progressCall(long ms){
     JNIEnv* env= NULL;
     (*javaVm)->AttachCurrentThread(javaVm,&env,NULL);

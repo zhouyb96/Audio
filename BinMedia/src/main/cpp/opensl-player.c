@@ -110,7 +110,14 @@ SLDataFormat_PCM productFormat(int channels,long rate,int bitFormat){
             channelMask = SL_SPEAKER_FRONT_LEFT |SL_SPEAKER_FRONT_RIGHT;
             break;
     }
-
+    /**
+     * 没做到支持Float 后续优化
+     */
+//    struct SLDataFormat_MIME_  slDataFormatMime ={
+//            bitFormat,
+//            "audio/*",
+//            SL_CONTAINERTYPE_MP3
+//    };
     SLDataFormat_PCM slDataFormatPcm = {
             SL_DATAFORMAT_PCM,                             //输出PCM格式的数据
             (SLuint32)channels,                                  //输出的声道数量

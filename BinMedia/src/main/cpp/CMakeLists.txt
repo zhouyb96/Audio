@@ -9,6 +9,153 @@ project("audio")
 include_directories(ffmpeg/include)
 include_directories(person)
 include_directories(ffmpeg/fftools)
+include_directories(algorithm)
+# Creates and names a library, sets it as either STATIC
+# or SHARED, and provides the relative paths to its source code.
+# You can define multiple libraries, and CMake builds them for you.
+# Gradle automatically packages shared libraries with your APK.
+
+#add_library( # Sets the name of the library.
+#        VOICE_3D
+#
+#        # Sets the library as a shared library.
+#        SHARED
+#
+#        # Provides a relative path to your source file(s).
+#        algorithm/voice_3d/VOICE_3D.c )
+#
+#add_library( # Sets the name of the library.
+#        VS_3D
+#
+#        # Sets the library as a shared library.
+#        SHARED
+#
+#        # Provides a relative path to your source file(s).
+#        algorithm/source_voice_3d/VS_3D.c )
+#
+#add_library( # Sets the name of the library.
+#        SOURCE_3D
+#
+#        # Sets the library as a shared library.
+#        SHARED
+#
+#        # Provides a relative path to your source file(s).
+#        algorithm/source_3d/SOURCE_3D.c )
+#
+#add_library( # Sets the name of the library.
+#        ANC
+#
+#        # Sets the library as a shared library.
+#        SHARED
+#
+#        # Provides a relative path to your source file(s).
+#        algorithm/anc/ANC.c )
+#
+#
+#add_library( # Sets the name of the library.
+#        DifferentialSurround
+#
+#        # Sets the library as a shared library.
+#        SHARED
+#
+#        # Provides a relative path to your source file(s).
+#        algorithm/dif_sur/DifferentialSurround.c )
+#
+#
+#add_library( # Sets the name of the library.
+#        DifferentialSurroundEquilibrium
+#
+#        # Sets the library as a shared library.
+#        SHARED
+#
+#        # Provides a relative path to your source file(s).
+#        algorithm/dif_sur_eq/DifferentialSurroundEquilibrium.c )
+#
+#
+#add_library( # Sets the name of the library.
+#        DIY_3D
+#
+#        # Sets the library as a shared library.
+#        SHARED
+#
+#        # Provides a relative path to your source file(s).
+#        algorithm/diy_3d/DIY_3D.c )
+#
+#add_library( # Sets the name of the library.
+#        EQ0
+#
+#        # Sets the library as a shared library.
+#        SHARED
+#
+#        # Provides a relative path to your source file(s).
+#        algorithm/eq/EQ0.c )
+#
+#add_library( # Sets the name of the library.
+#        limiter0
+#
+#        # Sets the library as a shared library.
+#        SHARED
+#
+#        # Provides a relative path to your source file(s).
+#        algorithm/limiter/limiter0.c)
+#
+#add_library( # Sets the name of the library.
+#        lowcut
+#
+#        # Sets the library as a shared library.
+#        SHARED
+#
+#        # Provides a relative path to your source file(s).
+#        algorithm/lowcut/lowcut.c )
+#
+#add_library( # Sets the name of the library.
+#        noisegate
+#
+#        # Sets the library as a shared library.
+#        SHARED
+#
+#        # Provides a relative path to your source file(s).
+#        algorithm/noisegate/gate.c )
+#
+#add_library( # Sets the name of the library.
+#        reverb
+#
+#        # Sets the library as a shared library.
+#        SHARED
+#
+#        # Provides a relative path to your source file(s).
+#        algorithm/reverb/reverb.c )
+#
+#add_library( # Sets the name of the library.
+#        voiceenhance
+#
+#        # Sets the library as a shared library.
+#        SHARED
+#
+#        # Provides a relative path to your source file(s).
+#        algorithm/voiceenhance/Voice_enhancement.c )
+#
+#add_library( # Sets the name of the library.
+#        algorithm
+#
+#        # Sets the library as a shared library.
+#        SHARED
+#
+#        # Provides a relative path to your source file(s).
+#        #        algorithm/lowcut/lowcut.c
+#        #        algorithm/limiter/limiter0.c
+#        #        algorithm/eq/EQ0.c
+#        #        algorithm/diy_3d/DIY_3D.c
+#        #        algorithm/dif_sur_eq/DifferentialSurroundEquilibrium.c
+#        #        algorithm/dif_sur/DifferentialSurround.c
+#        #        algorithm/anc/ANC.c
+#        #        algorithm/source_3d/SOURCE_3D.c
+#        #        algorithm/voice_3d/VOICE_3D.c
+#        #        algorithm/noisegate/gate.c
+#        #        algorithm/reverb/reverb.c
+#        #        algorithm/voiceenhance/Voice_enhancement.c
+#        algorithm/algorithm.c
+#        )
 
 add_library( # Sets the name of the library.
         native-audio-player
@@ -19,7 +166,14 @@ add_library( # Sets the name of the library.
              # Provides a relative path to your source file(s).
         native-audio-player.c)
 
+add_library( # Sets the name of the library.
+        filter-util
 
+        # Sets the library as a shared library.
+        SHARED
+
+        # Provides a relative path to your source file(s).
+        filter-util.c)
 
 add_library( # Sets the name of the library.
         native-audio-filter
@@ -224,6 +378,10 @@ target_link_libraries(audio-cache-pool
         ${log-lib}
         )
 
+#target_link_libraries(EQ0
+#        ${log-lib}
+#        )
+
 target_link_libraries( # Specifies the target library.
         native-audio-player
         # Links the target library to the log library
@@ -286,6 +444,8 @@ target_link_libraries( # Specidefies the target library.
         avfilter
         ${log-lib}
         audio-cache-pool
+        native-audio-filter
+#        algorithm
         )
 
 target_link_libraries( # Specidefies the target library.
@@ -304,3 +464,21 @@ target_link_libraries( # Specidefies the target library.
         swscale
         ${log-lib}
         )
+#target_link_libraries( # Specifies the target library.
+#        algorithm
+#
+#        # Links the target library to the log library
+#        # included ANC_in the NDK.
+#        VOICE_3D
+#        SOURCE_3D
+#        VS_3D
+#        ANC
+#        DifferentialSurround
+#        DifferentialSurroundEquilibrium
+#        DIY_3D
+#        EQ0
+#        limiter0
+#        lowcut
+#        reverb
+#        noisegate
+#        voiceenhance)
