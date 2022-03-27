@@ -16,13 +16,12 @@ class AudioFragment : BaseFragment<AudioPlayFragmentVM,FragmentAudioBinding>() {
     override val viewModel: AudioPlayFragmentVM by viewModels()
 
     override fun bindLayout(): Int = R.layout.fragment_audio
-    var iAudioEvent:IAudioEvent?=null
 
     override fun initViewModel() {
 
     }
 
     override fun initView(view: View) {
-        binding.event=iAudioEvent
+        binding.event=requireActivity() as IAudioEvent
     }
 }

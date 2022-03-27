@@ -9,14 +9,22 @@ import android.os.Looper
 import android.util.Log
 import android.view.View
 import androidx.activity.viewModels
+import androidx.recyclerview.widget.GridLayoutManager
 import cn.zybwz.audio.R
+import cn.zybwz.audio.adapter.FilterAdapter
+import cn.zybwz.audio.adapter.ToolAdapter
 import cn.zybwz.audio.bean.RecordBean
+import cn.zybwz.audio.bean.ToolBean
 import cn.zybwz.audio.databinding.ActivityAudioPlayBinding
 import cn.zybwz.audio.ui.audioedit.crop.AudioCropActivity
+import cn.zybwz.audio.ui.audioedit.fade.AudioFilterFragment
+import cn.zybwz.audio.ui.audioedit.filter.FilterFragment
+import cn.zybwz.audio.ui.vosk.VoskFragment
 import cn.zybwz.audio.utils.ms2Format
 import cn.zybwz.base.BaseActivity
 import cn.zybwz.binmedia.BinPlayer
 import cn.zybwz.binmedia.FFmpegCmd
+import cn.zybwz.binmedia.getEchoLiveDefault
 import cn.zybwz.binmedia.widget.WaveView
 import java.text.SimpleDateFormat
 
@@ -28,7 +36,11 @@ class AudioPlayActivity : BaseActivity<AudioPlayActivityVM,ActivityAudioPlayBind
     private var currentDuration=0L
     private var needSeek=false
     override fun bindLayout(): Int = R.layout.activity_audio_play
-
+    private val baseTool=ToolAdapter()
+    private val editTool=ToolAdapter()
+//    private  val audioFragment=AudioFragment()
+    private var voskFragment:VoskFragment?=null
+    private var filterFragment:FilterFragment?=null
     override fun titleBar(): View? {
         binding.ivBack.setOnClickListener {
             finish()
@@ -37,7 +49,11 @@ class AudioPlayActivity : BaseActivity<AudioPlayActivityVM,ActivityAudioPlayBind
     }
 
     override fun initViewModel() {
+        viewModel.filterData.observe(this,{
+            Log.e(TAG, "initViewModel:${it.type} " )
+            binPlayer.addFilter(it.type)
 
+        })
     }
 
     override fun initView() {
@@ -68,6 +84,21 @@ class AudioPlayActivity : BaseActivity<AudioPlayActivityVM,ActivityAudioPlayBind
 
         }
         binding.viewmodel=viewModel
+//        supportFragmentManager.beginTransaction().add(R.id.fragment,audioFragment).commitAllowingStateLoss()
+        baseTool.addData(viewModel.getBaseTool())
+        binding.navigation.layoutManager=GridLayoutManager(this,5)
+        baseTool.event=object : ToolAdapter.Event{
+            override fun onClick(toolBean: ToolBean, position: Int) {
+                showNavigation(position+1)
+            }
+
+        }
+        binding.childBack.setOnClickListener {
+            showNavigation(0)
+        }
+        binding.navigation.adapter=baseTool
+
+        binding.childTool.layoutManager=GridLayoutManager(this,5)
     }
 
     companion object{
@@ -117,20 +148,109 @@ class AudioPlayActivity : BaseActivity<AudioPlayActivityVM,ActivityAudioPlayBind
         binPlayer.seek(l)
     }
 
+    private var navigationLevel=0
+    private fun showNavigation(level:Int){
+        navigationLevel=level
+        if (navigationLevel==0){
+            binding.navigation.visibility=View.VISIBLE
+            binding.childNavigation.visibility=View.GONE
+        }else{
+            when(navigationLevel){
+                1->{
+                    editTool.addData(viewModel.getEditTool())
+                    editTool.event=object :ToolAdapter.Event{
+                        override fun onClick(toolBean: ToolBean, position: Int) {
+                            when(position){
+                                0->{
+                                    AudioCropActivity.startActivity(this@AudioPlayActivity,audioBean)
+                                }
+                                1->{
+
+                                }
+                            }
+                        }
+                    }
+                    binding.childTool.adapter=editTool
+                }
+                2->{
+                    editTool.addData(viewModel.getFilterTool())
+                    editTool.event=object :ToolAdapter.Event{
+                        override fun onClick(toolBean: ToolBean, position: Int) {
+                            viewModel.filterIndex=position-1
+                            when(position){
+                                0->{
+
+
+                                }
+                                1->{
+                                    binPlayer.addFilterCustom("aecho", getEchoLiveDefault())
+                                }
+                            }
+                        }
+                    }
+                    binding.childTool.adapter=editTool
+                }
+            }
+            binding.navigation.visibility=View.GONE
+            binding.childNavigation.visibility=View.VISIBLE
+        }
+
+    }
+
     override fun onCrop(view: View) {
 
     }
 
     override fun onFilter(view: View) {
+        val begin = supportFragmentManager.beginTransaction()
+//        begin.hide(audioFragment)
 
+        if (filterFragment!=null){
+
+            filterFragment?.let {
+
+                if (!it.isVisible)
+                    begin.show(it)
+            }
+        }else {
+            filterFragment = FilterFragment.newInstance()
+            filterFragment?.let{
+                begin.add(R.id.fragment,it,"vosk")
+            }
+
+        }
+        begin.commit()
     }
 
     override fun onFade(view: View) {
-
+//        AudioFilterFragment
     }
 
     override fun onFormat(view: View) {
 
+    }
+
+    override fun onText(view: View) {
+        val begin = supportFragmentManager.beginTransaction()
+//        begin.hide(audioFragment)
+
+        if (voskFragment!=null){
+
+            voskFragment?.let {
+                it.recognizeFile(audioBean.pcm_path)
+                if (!it.isVisible)
+                    begin.show(it)
+            }
+        }else {
+            voskFragment = VoskFragment.newInstance(audioBean.pcm_path)
+            voskFragment?.let{
+                begin.add(R.id.fragment,it,"vosk")
+            }
+
+        }
+
+
+        begin.commit()
     }
 
     private val playListener = object : BinPlayer.IStatusChangeListener {

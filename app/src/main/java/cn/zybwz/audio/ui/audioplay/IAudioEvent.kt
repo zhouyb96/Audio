@@ -11,4 +11,6 @@ interface IAudioEvent {
     fun onFade(view: View)
 
     fun onFormat(view: View)
+
+    fun onText(view: View)
 }

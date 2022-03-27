@@ -25,6 +25,6 @@ struct ResampleInfo{
 struct ResampleInfo inResampleInfo;
 struct ResampleInfo outResampleInfo;
 
-static char enableFilter=1;
+extern char enableFilter;
 
 #endif //JNIDEMO_NATIVE_AUDIO_COMMON_H

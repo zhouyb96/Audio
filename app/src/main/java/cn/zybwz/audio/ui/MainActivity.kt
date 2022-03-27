@@ -17,6 +17,7 @@ import cn.zybwz.audio.utils.ms2Format
 import cn.zybwz.base.BaseActivity
 import cn.zybwz.binmedia.FFmpegCmd
 import cn.zybwz.binmedia.OpenSLRecorder
+import cn.zybwz.binmedia.RecorderParams
 import com.permissionx.guolindev.PermissionX
 import java.io.File
 import java.text.SimpleDateFormat
@@ -32,6 +33,7 @@ class MainActivity : BaseActivity<MainActivityVM,ActivityMainBinding>(), IMainAc
     override fun bindLayout(): Int = R.layout.activity_main
 
     override fun initViewModel() {
+
         viewModel.recordStatusData.observe(this,{
             Log.e(TAG, "initViewModel: $it", )
             when(it){
@@ -42,7 +44,8 @@ class MainActivity : BaseActivity<MainActivityVM,ActivityMainBinding>(), IMainAc
                         val fFmpegCmd = FFmpegCmd()
                         val replace = currentRecord.path.replace(".pcm", ".mp3")
                         fFmpegCmd.pcm2Mp3(currentRecord.path,replace)
-                        FileUtils.deleteFile(currentRecord.path)
+//                        FileUtils.deleteFile(currentRecord.path)
+                        currentRecord.pcm_path=currentRecord.path
                         currentRecord.name=currentRecord.name.replace(".pcm", ".mp3")
                         currentRecord.path=replace
                         viewModel.insertRecord(currentRecord)
@@ -82,6 +85,11 @@ class MainActivity : BaseActivity<MainActivityVM,ActivityMainBinding>(), IMainAc
 
         openSLRecorder=OpenSLRecorder()
         openSLRecorder.init()
+//        val recorderParams = RecorderParams()
+//        recorderParams.sampleRate=16000000
+//        recorderParams.channels=1
+//        recorderParams.channelLayout=1
+//        openSLRecorder.outputProperty= recorderParams
         openSLRecorder.addProgressListener (object : OpenSLRecorder.IProgressListener{
             override fun onProgress(recorderMs: Long) {
                 Handler(Looper.getMainLooper()).post {
@@ -91,9 +99,13 @@ class MainActivity : BaseActivity<MainActivityVM,ActivityMainBinding>(), IMainAc
                 }
             }
 
-            override fun onWave(db: Char) {
-
+            override fun onWave(db: Int) {
+                Log.e(TAG, "onWave: $db", )
+                Handler(Looper.getMainLooper()).post {
+                    binding.waveView.waveList.add(db)
+                }
             }
+
 
         })
         requestPermission()

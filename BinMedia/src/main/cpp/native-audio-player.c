@@ -1,3 +1,4 @@
+#include <native-audio-filter.h>
 #include "person/native-audio-player.h"
 #include "native-audio-common.h"
 #include "native-audio-decoder.h"
@@ -87,7 +88,27 @@ Java_cn_zybwz_binmedia_BinPlayer_resume(JNIEnv *env, jobject thiz) {
 
 JNIEXPORT void JNICALL
 Java_cn_zybwz_binmedia_BinPlayer_addFilter(JNIEnv *env, jobject thiz, jint type) {
+    if (type==-1){
+        remove_all_filter();
+        enableFilter=0;
+        return;
+    }
+    AVFilterContext* avFilterContext= buildAVFilterContextStr(arrayFilter[type].name,arrayFilter[type].filter_str);
+    LOGE("avFilterContext %s",avFilterContext->name);
+    add_filter(avFilterContext);
+    enableFilter=1;
+}
 
+JNIEXPORT void JNICALL
+Java_cn_zybwz_binmedia_BinPlayer_addFilterCustom(JNIEnv *env, jobject thiz, jstring name,
+                                                 jstring str) {
+    LOGE("avFilterContext addFilterCustom");
+    const char* j2name=(*env)->GetStringUTFChars(env,name,JNI_FALSE);
+    const char* j2str=(*env)->GetStringUTFChars(env,str,JNI_FALSE);
+    AVFilterContext* avFilterContext= buildAVFilterContextStr(j2name,j2str);
+
+    add_filter(avFilterContext);
+    enableFilter=1;
 }
 
 void progressCall(long ms){

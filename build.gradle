@@ -4,6 +4,9 @@ buildscript {
     repositories {
         google()
         mavenCentral()
+        maven {
+            url 'https://alphacephei.com/maven/'
+        }
     }
     dependencies {
         classpath "com.android.tools.build:gradle:4.2.1"
@@ -19,6 +22,9 @@ allprojects {
         google()
         mavenCentral()
         jcenter() // Warning: this repository is going to shut down soon
+        maven {
+            url 'https://alphacephei.com/maven/'
+        }
     }
 }
 

@@ -3,8 +3,16 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
-        <entry key="..\:/AndroidWork/Personal/Audio/app/src/main/res/layout/activity_audio_play.xml" value="0.12545289855072464" />
+        <entry key="..\:/AndroidWork/Personal/Audio/app/src/main/res/layout/activity_audio_crop.xml" value="0.1" />
+        <entry key="..\:/AndroidWork/Personal/Audio/app/src/main/res/layout/activity_audio_play.xml" value="0.16" />
+        <entry key="..\:/AndroidWork/Personal/Audio/app/src/main/res/layout/activity_vosk.xml" value="0.1" />
         <entry key="..\:/AndroidWork/Personal/Audio/app/src/main/res/layout/fragment_audio.xml" value="0.25" />
+        <entry key="..\:/AndroidWork/Personal/Audio/app/src/main/res/layout/fragment_audio_filter.xml" value="0.3319746376811594" />
+        <entry key="..\:/AndroidWork/Personal/Audio/app/src/main/res/layout/fragment_filter.xml" value="0.1" />
+        <entry key="..\:/AndroidWork/Personal/Audio/app/src/main/res/layout/fragment_vosk.xml" value="0.1" />
+        <entry key="..\:/AndroidWork/Personal/Audio/app/src/main/res/layout/item_filter.xml" value="0.22" />
+        <entry key="..\:/AndroidWork/Personal/Audio/app/src/main/res/layout/item_record.xml" value="0.13623725671918444" />
+        <entry key="..\:/AndroidWork/Personal/Audio/app/src/main/res/layout/item_tool.xml" value="0.1" />
       </map>
     </option>
   </component>

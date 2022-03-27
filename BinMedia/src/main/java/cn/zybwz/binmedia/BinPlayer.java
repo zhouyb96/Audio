@@ -19,6 +19,8 @@ public class BinPlayer {
      */
     public native void addFilter(int type);
 
+    public native void addFilterCustom(String name,String str);
+
     public interface IProgressListener{
         void onProgress(long recorderMs);
     }

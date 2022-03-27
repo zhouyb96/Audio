@@ -20,7 +20,7 @@ enum FilterType {
 };
 
 FilterInfo arrayFilter[FILTER_NB]={
-        [FILTER_ECHO] = {"aecho","in_gain=%f:out_gain=%f:delays=%ld:decays=%f"},//回声,
+        [FILTER_ECHO] = {"aecho","in_gain=0.8:out_gain=0.9:delays=1000:decays=0.3"},//回声,
         [FILTER_FADE] = {"afade","t=%s:ss=%:ns=%ld:st=%d:d=%d:curve=tri"},//渐入渐出
         [FILTER_VOLUME] = {"volume","volume=%f"},//音量
         [FILTER_VIBRATO] = {"vibrato","f=%f:d=%f"}//颤音

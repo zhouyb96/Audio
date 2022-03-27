@@ -26,7 +26,7 @@ public class OpenSLRecorder {
 
     public interface IProgressListener{
         void onProgress(long recorderMs);
-        void onWave(char db);
+        void onWave(int db);
     }
 
     interface IStatusChangeListener{

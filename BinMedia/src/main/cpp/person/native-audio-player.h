@@ -23,6 +23,7 @@
 #include <SLES/OpenSLES.h>
 #include <SLES/OpenSLES_Android.h>
 #include "opensl-player.h"
+#include "filter-util.h"
 #define LOG_TAG "NativeAudio"
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR,LOG_TAG ,__VA_ARGS__) // 定义LOGE类型
 pthread_mutex_t mutex ;

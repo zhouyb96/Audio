@@ -12,7 +12,10 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Audio">
-        <activity android:name=".ui.audioedit.crop.AudioCropActivity"></activity>
+        <activity
+            android:name=".ui.vosk.VoskActivity"
+            android:exported="false" />
+        <activity android:name=".ui.audioedit.crop.AudioCropActivity" />
         <activity android:name=".ui.audioplay.AudioPlayActivity" />
         <activity android:name=".ui.recordfiles.RecordFilesActivity" />
         <activity

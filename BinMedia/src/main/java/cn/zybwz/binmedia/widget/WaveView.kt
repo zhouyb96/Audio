@@ -26,7 +26,7 @@ open class WaveView(context: Context,attributeSet: AttributeSet):View(context,at
     private val scaleTextOffset=21*5/4
     var maxDuration=0L
 
-    private val waveList:ArrayList<Int> = ArrayList()
+    val waveList:ArrayList<Int> = ArrayList()
 
     private var type=TYPE_RECORDING //
 
@@ -49,10 +49,10 @@ open class WaveView(context: Context,attributeSet: AttributeSet):View(context,at
         waveLinePaint.strokeWidth=6f
         waveLinePaint.isAntiAlias=true
         waveLinePaint.style=Paint.Style.FILL
-        //todo 模拟分贝列表 得具体处理
-        for (i in 0 .. 20){
-            waveList.add(((i*10/2.00).toInt()))
-        }
+//        //todo 模拟分贝列表 得具体处理
+//        for (i in 0 .. 20){
+//            waveList.add(((i*10/2.00).toInt()))
+//        }
         setBackgroundColor(Color.parseColor("#eeeeee"))
     }
 
@@ -71,7 +71,7 @@ open class WaveView(context: Context,attributeSet: AttributeSet):View(context,at
 
         drawBaseline(canvas)
         drawScaleText(canvas)
-        //drawWave(canvas)
+        drawWave(canvas)
     }
 
     private fun drawBaseline(canvas: Canvas?){
@@ -95,11 +95,21 @@ open class WaveView(context: Context,attributeSet: AttributeSet):View(context,at
     }
 
     private fun drawWave(canvas: Canvas?){
-        for ((i,db) in waveList.withIndex()){
-            val toFloat=(width/2+i*200*msPerPx).toFloat()
-            val lineHeight=db//todo 处理真实dp转化
-            canvas?.drawLine(toFloat,166f-lineHeight/2,toFloat,166f+lineHeight,waveLinePaint)
-        }
+        val start=if(((currentTime- pxTime/2)/200)>0)
+            (currentTime- pxTime/2)/200
+        else 0
+        val end=if(currentTime/200>30)
+            start+30
+        else currentTime/200
+        if (waveList.isEmpty())
+            return
+//        for (i in start.toInt() until  end.toInt()){
+//            val l = (i*200) - pxTime/2
+//            val toFloat = ((l-currentTime) * msPerPx + width).toFloat()
+//            val lineHeight=(waveList[i]-40)*10f//todo 处理真实dp转化
+//
+//            canvas?.drawLine(toFloat,(height)/2-lineHeight/2,toFloat,(height)/2+lineHeight/2,waveLinePaint)
+//        }
     }
 
     override fun onTouchEvent(event: MotionEvent?): Boolean {

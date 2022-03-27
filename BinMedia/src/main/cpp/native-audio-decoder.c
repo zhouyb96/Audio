@@ -16,6 +16,7 @@ AVFormatContext  * avFormatContext = NULL;
 AVRational time_base;
 unsigned char decoding=0;
 unsigned char is_planar=0;
+char enableFilter=0;
 SwrContext * swrContext;
 long startTime=1000;
 long endTime=-1;
@@ -62,10 +63,10 @@ void self_deal_packet(AVCodecContext *ctx,AVFrame *frame,AVPacket * packet)
         if (sendBuffer==NULL){
             LOGE("BBB NULL");
         }
-//        if (enableFilter){
-//            LOGE("enableFilter");
-//            filterBuffer(sendBuffer,frame,ctx);
-//        }
+        if (enableFilter){
+            LOGE("enableFilter");
+            filterBuffer(sendBuffer,frame,ctx);
+        }
         swr_convert(swrContext,&sendBuffer,s,(const uint8_t **)frame->data,frame->nb_samples);
 //        if (is_planar){
 //            for (i = 0; i < decoded_frame->nb_samples; i++){

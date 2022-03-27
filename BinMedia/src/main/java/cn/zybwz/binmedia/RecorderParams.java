@@ -1,10 +1,10 @@
 package cn.zybwz.binmedia;
 
 public class RecorderParams {
-    private long sampleRate;
-    private int bitFormat;
-    private int channels;
-    private int channelLayout;
+    private long sampleRate=44100000;
+    private int bitFormat=16;
+    private int channels=2;
+    private int channelLayout=3;
 
     public long getSampleRate() {
         return sampleRate;

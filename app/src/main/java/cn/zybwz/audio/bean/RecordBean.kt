@@ -13,6 +13,7 @@ class RecordBean(
 
     @ColumnInfo var name:String=""
     @ColumnInfo var path:String=""
+    @ColumnInfo var pcm_path:String=""
     @ColumnInfo var date:Long=0
     @ColumnInfo var duration:Long=0
 }

@@ -23,21 +23,23 @@ int init_filter_graph(){
     const AVFilter* src_filter;
     const AVFilter* format_filter;
     const AVFilter* sink_filter;
+//    LOGE("filter %s 22点21分",filterNodes.thiz->filter->name);
     if (filterNodes.thiz==NULL){
-        avfilter_graph_free(&av_filter_graph);
-        av_filter_graph=NULL;
+//        avfilter_graph_free(&av_filter_graph);
+//        av_filter_graph=NULL;
         return -1;
     } else{
         LOGE("filter %s ",filterNodes.thiz->filter->name);
     }
     src_filter = avfilter_get_by_name("abuffer");
-    av_log(av_filter_graph,AV_LOG_ERROR,"TEST AV LOG");
+    //av_log(av_filter_graph,AV_LOG_ERROR,"TEST AV LOG");
     if (!src_filter) {
         LOGE("Could not find the abuffer filter.\n");
         return -1;
     }
+    LOGE("src_filter_context 0");
     src_filter_context = avfilter_graph_alloc_filter(av_filter_graph,src_filter,"src");
-
+    LOGE("src_filter_context");
     const char * srcInfo= "sample_rate=44100:sample_fmt=fltp:channel_layout=stereo";
     if (avfilter_init_str(src_filter_context, srcInfo) <0) {
         LOGE("error init abuffer filter");
@@ -134,6 +136,7 @@ unsigned char filter_exist(const char * name){
 
 struct FilterNode * find_filter(const char * name){
     struct FilterNode* node=&filterNodes;
+    if (!node->thiz)return NULL;
     do {
         int res=strcmp(node->thiz->name,name);
         if (res>=0)
@@ -174,6 +177,7 @@ void add_filter(AVFilterContext* avFilter){
     }
     if (!node->thiz){
         filterNodes.thiz=avFilter;
+        LOGE("filterNodes %s",filterNodes.thiz->name);
         init_filter_graph();
         return;
     }
