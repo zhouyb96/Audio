@@ -16,6 +16,8 @@
 //    char srcInfo[100];
 //    sprintf(srcInfo,srcInfoFormat,inResampleInfo.sample_rate);
 //}
+AVFilterInOut* input;
+AVFilterInOut* out;
 
 int init_filter_graph(){
     int err;
@@ -26,10 +28,18 @@ int init_filter_graph(){
 //    LOGE("filter %s 22点21分",filterNodes.thiz->filter->name);
     if (filterNodes.thiz==NULL){
 //        avfilter_graph_free(&av_filter_graph);
-//        av_filter_graph=NULL;
+        av_filter_graph=NULL;
         return -1;
     } else{
-        LOGE("filter %s ",filterNodes.thiz->filter->name);
+        //LOGE("filter %s ",filterNodes.thiz->filter->name);
+    }
+    if (src_filter_context!=NULL){
+        avfilter_free(src_filter_context);
+        src_filter_context=NULL;
+    }
+    if (sink_filter_context!=NULL){
+        avfilter_free(sink_filter_context);
+        sink_filter_context=NULL;
     }
     src_filter = avfilter_get_by_name("abuffer");
     //av_log(av_filter_graph,AV_LOG_ERROR,"TEST AV LOG");
@@ -38,6 +48,8 @@ int init_filter_graph(){
         return -1;
     }
     LOGE("src_filter_context 0");
+    if (av_filter_graph==NULL)
+        av_filter_graph = avfilter_graph_alloc();
     src_filter_context = avfilter_graph_alloc_filter(av_filter_graph,src_filter,"src");
     LOGE("src_filter_context");
     const char * srcInfo= "sample_rate=44100:sample_fmt=fltp:channel_layout=stereo";
@@ -61,6 +73,7 @@ int init_filter_graph(){
         return -1;
     }
     sink_filter = avfilter_get_by_name("abuffersink");
+
     sink_filter_context = avfilter_graph_alloc_filter(av_filter_graph, sink_filter, "sink");
     err = avfilter_init_str(sink_filter_context, NULL);
     if (err<0){
@@ -70,29 +83,42 @@ int init_filter_graph(){
     /* Connect the filters;
     * in this simple case the filters just form a linear chain. */
     AVFilterContext* base_filter_ctx=NULL;
+    AVFilterContext* pre_filter_ctx=NULL;
     struct FilterNode* node=&filterNodes;
+    int index=0;
     while (node!=NULL&&node->thiz!=NULL){
         base_filter_ctx=node->thiz;
-        LOGE("添加特效%s",base_filter_ctx->filter->name);
-        err = avfilter_link(src_filter_context, 0, base_filter_ctx, 0);
+        if (node->pre==NULL){
+            pre_filter_ctx=src_filter_context;
+        } else {
+            pre_filter_ctx=node->pre->thiz;
+        }
+        LOGE("添加特效%s  %s",base_filter_ctx->filter->name,pre_filter_ctx->filter->name);
+        err = avfilter_link(pre_filter_ctx, 0, base_filter_ctx, 0);
         if (err<0){
-            LOGE("特效%s 添加失败",base_filter_ctx->filter->name);
+
+//            node->thiz=NULL;//移除链
+            char eb[256];
+            char * errs=av_make_error_string(eb,256,err);
+            LOGE("特效%s 添加失败 %s",base_filter_ctx->filter->name,eb);
             return err;
         }
-        node = filterNodes.next;
+        index++;
+        node = node->next;
     }
     if (err >= 0&&base_filter_ctx!=NULL)
         err = avfilter_link(base_filter_ctx, 0, format_ctx, 0);
     if (err >= 0)
         err = avfilter_link(format_ctx, 0, sink_filter_context, 0);
     if (err < 0) {
-        fprintf(stderr, "Error connecting filters\n");
+        LOGE("Error connecting filters");//fprintf(stderr, "Error connecting filters\n");
         return err;
     }
 
     /* Configure the graph. */
     err = avfilter_graph_config(av_filter_graph, NULL);
     if (err < 0) {
+        LOGE("Error configuring the filter graph");
         av_log(NULL, AV_LOG_ERROR, "Error configuring the filter graph\n");
         return err;
     }
@@ -127,6 +153,7 @@ unsigned char filter_exist(const char * name){
     }
     do {
         int res=strcmp(node->thiz->name,name);
+        LOGE("strcmp %s,%s",node->thiz->name,name);
         if (res>=0)
             return 1;
         node=node->next;
@@ -139,17 +166,24 @@ struct FilterNode * find_filter(const char * name){
     if (!node->thiz)return NULL;
     do {
         int res=strcmp(node->thiz->name,name);
-        if (res>=0)
+        LOGE("strcmp %s,%s",node->thiz->name,name);
+        if (res==0)
             return node;
         node=node->next;
     }while (node!=NULL);
     return NULL;
 }
+
 AVFilterContext* buildAVFilterContextStr(const char * filter_name,const char * str){
     const AVFilter* base_filter;
     if (av_filter_graph==NULL)
         av_filter_graph = avfilter_graph_alloc();
-
+    char* res=strchr(filter_name,',');
+    if (res!=NULL){
+        //complex_str=str;
+        init_filter_graph();
+        return NULL;
+    }
     base_filter = avfilter_get_by_name(filter_name);
     if (base_filter==0){
         LOGE("error get filter by name:%s",filter_name);
@@ -168,24 +202,32 @@ AVFilterContext* buildAVFilterContextStr(const char * filter_name,const char * s
     return base_filter_ctx;
 }
 
-void add_filter(AVFilterContext* avFilter){
+void add_filter(AVFilterContext* avFilter,int filter){
+    av_log_set_callback(log_callback_test2);
     struct FilterNode new_node={avFilter,NULL,NULL};
     struct FilterNode* node=&filterNodes;
-    struct FilterNode * filterNode=find_filter(avFilter->name);
+    struct FilterNode * filterNode=find_filter(avFilter->filter->name);
+    LOGE("add_filter %s",avFilter->filter->name);
     if (filterNode){
+        LOGE("FOUND? %s",filterNode->thiz->filter->name);
         remove_filter(filterNode->thiz);
     }
     if (!node->thiz){
         filterNodes.thiz=avFilter;
         LOGE("filterNodes %s",filterNodes.thiz->name);
+        if (!filter)
+            return;
         init_filter_graph();
         return;
     }
-    do {
+
+    while (node->next!=NULL){
         node=node->next;
-    }while (node!=NULL);
+    }
     new_node.pre=node;
-    node->next=&new_node;
+    filterNodes.next=&new_node;
+    if (!filter)
+        return;
     init_filter_graph();
 };
 
@@ -242,7 +284,6 @@ int filterBuffer(uint8_t* buffer,AVFrame* decoded_frame,AVCodecContext *c){
         av_frame_unref(decoded_frame);
         return 0;
     }
-    LOGE("av_buffersink_get_frame");
     av_buffersink_get_frame(sink_filter_context, decoded_frame);
     return offset;
 };

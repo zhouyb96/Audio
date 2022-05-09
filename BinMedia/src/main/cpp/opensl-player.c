@@ -17,6 +17,7 @@
 #include <android/log.h>
 #include <stdbool.h>
 #include "native-audio-common.h"
+
 #define LOG_TAG "native-player"
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR,LOG_TAG ,__VA_ARGS__) // 定义LOGE类型
 unsigned  char play_status=0;//0 start 1 recording 2 pause 3 stop
@@ -26,9 +27,20 @@ SLPlayItf player= NULL;
 static pthread_mutex_t* mutex ;
 static pthread_cond_t*  playFinish ;
 static pthread_cond_t*  decodeFinish ;
-
+double speech=1;
 StatusCallBack* callBack;
+unsigned char bitFmt=16;
 unsigned char notifyStart=0;
+//static void speech_deal(unsigned char* buffer,unsigned int size){
+//    for (int i = 0; i < size; i=i+(bitFmt/8)) {
+//        if(bitFmt/8==4){
+//            float v[1]={0};
+//            memcpy(v,buffer+i,4);
+//            float old=v[0]*2;
+//            memcpy((float *)(buffer+i),&old,1);
+//        }
+//    }
+//}
 static void PlayCallBack(SLAndroidSimpleBufferQueueItf pcmBufferQueue, void * context)
 {
     if (NULL != player) {
@@ -50,7 +62,21 @@ static void PlayCallBack(SLAndroidSimpleBufferQueueItf pcmBufferQueue, void * co
                 callBack->Stop();
                 (*player)->SetPlayState(player,SL_PLAYSTATE_STOPPED);
                 LOGE("SL_PLAYSTATE_STOPPED");
-            }else(*pcmBufferQueue)->Enqueue(pcmBufferQueue,playBuffer , recorderSize);
+            }else {
+//                if (speech!=1&&tempoStream_!=NULL){
+//                    LOGE("ret www%f %d %d ",sonicGetSpeed(tempoStream_),recorderSize,read_size);
+//                    int ret = sonicWriteShortToStream(tempoStream_, playBuffer, (int )read_size);
+//                    LOGE("ret%d",ret);
+//                    // 计算处理后的点数
+//                    int numSamples = (int )(recorderSize / speech);
+//                    if(ret) {
+//                        // 从流中读取处理好的数据
+//                        recorderSize = sonicReadUnsignedCharFromStream(tempoStream_, playBuffer, numSamples);
+//                        LOGE("new_buffer_size %d",recorderSize);
+//                    }
+//                }
+                (*pcmBufferQueue)->Enqueue(pcmBufferQueue,playBuffer , read_size);
+            }
         }
     }
 }
@@ -82,20 +108,29 @@ void createEngine(){
 
 SLAndroidSimpleBufferQueueItf simpleBufferQueueItf;
 
+void opensl_speech(double s){
+    speech=s;
+    if (tempoStream_)
+        sonicSetSpeed(tempoStream_, (float )speech);
+    else {
+
+    }
+    //createPlayer(fFmpegAudioInfo.channels,fFmpegAudioInfo.sample_rate,fFmpegAudioInfo.bit_format);
+}
 SLDataFormat_PCM productFormat(int channels,long rate,int bitFormat){
     SLint32 slRate;
     switch (rate) {
         case 8000:
-            slRate=SL_SAMPLINGRATE_8;
+            slRate=SL_SAMPLINGRATE_8*speech;
             break;
         case 44100:
-            slRate=SL_SAMPLINGRATE_44_1;
+            slRate=SL_SAMPLINGRATE_44_1*speech;
             break;
         case 96000:
-            slRate=SL_SAMPLINGRATE_96;
+            slRate=SL_SAMPLINGRATE_96*speech;
             break;
         default:
-            slRate=SL_SAMPLINGRATE_44_1;
+            slRate=SL_SAMPLINGRATE_44_1*speech;
             break;
     }
     SLint32 channelMask;
@@ -118,6 +153,7 @@ SLDataFormat_PCM productFormat(int channels,long rate,int bitFormat){
 //            "audio/*",
 //            SL_CONTAINERTYPE_MP3
 //    };
+    LOGE("FORMAT,%d",bitFmt);
     SLDataFormat_PCM slDataFormatPcm = {
             SL_DATAFORMAT_PCM,                             //输出PCM格式的数据
             (SLuint32)channels,                                  //输出的声道数量
@@ -151,7 +187,9 @@ void createPlayer(int channels,long rate,int bitFormat) {
     };
 
     SLDataLocator_AndroidSimpleBufferQueue bufferQueue={SL_DATALOCATOR_ANDROIDSIMPLEBUFFERQUEUE ,2};
+    bitFmt=bitFormat;
     SLDataFormat_PCM slDataFormatPcm =  productFormat(channels,rate,bitFormat);
+
     SLDataSource slDataSource = {
             &bufferQueue,
             &slDataFormatPcm,
@@ -165,6 +203,15 @@ void createPlayer(int channels,long rate,int bitFormat) {
     const SLboolean req[1] = {SL_BOOLEAN_TRUE};
     SLObjectItf playerObject;
     sLresult=(*audioEngine)->CreateAudioPlayer(audioEngine,&playerObject,&slDataSource,&slDataSink,1,ids,req);
+    tempoStream_=sonicCreateStream((int)rate,channels);
+
+//    if (tempoStream_==NULL)
+//        LOGE("tempoStream_ Create fail");
+//    else {
+//        if (speech!=1.0){
+//            sonicSetSpeed(tempoStream_,(float )speech);
+//        }
+//    }
     if (SL_RESULT_SUCCESS != sLresult) {
         return;
     }

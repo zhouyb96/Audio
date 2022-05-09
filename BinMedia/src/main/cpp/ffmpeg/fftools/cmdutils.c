@@ -125,16 +125,28 @@ void init_dynload(void)
 
 static void (*program_exit)(int ret);
 
+static void (*program_status)(int ret);
+
+
+
 void register_exit(void (*cb)(int ret))
 {
     program_exit = cb;
 }
 
+void register_status(void (*cb)(int ret))
+{
+    program_status = cb;
+}
+
+
+
 void exit_program(int ret)
 {
-//    if (program_exit)
-//        program_exit(ret);
-    return ;
+    if (program_exit)
+        program_exit(ret);
+    if (program_status)
+        program_status(ret);
 }
 
 double parse_number_or_die(const char *context, const char *numstr, int type,

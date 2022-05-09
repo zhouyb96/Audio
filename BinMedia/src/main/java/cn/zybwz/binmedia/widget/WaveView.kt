@@ -103,13 +103,13 @@ open class WaveView(context: Context,attributeSet: AttributeSet):View(context,at
         else currentTime/200
         if (waveList.isEmpty())
             return
-//        for (i in start.toInt() until  end.toInt()){
-//            val l = (i*200) - pxTime/2
-//            val toFloat = ((l-currentTime) * msPerPx + width).toFloat()
-//            val lineHeight=(waveList[i]-40)*10f//todo 处理真实dp转化
-//
-//            canvas?.drawLine(toFloat,(height)/2-lineHeight/2,toFloat,(height)/2+lineHeight/2,waveLinePaint)
-//        }
+        for (i in start.toInt() until  end.toInt()){
+            val l = (i*200) - pxTime/2
+            val toFloat = ((l-currentTime) * msPerPx + width).toFloat()
+            val lineHeight=(waveList[i]-40)*10f//todo 处理真实dp转化
+
+            canvas?.drawLine(toFloat,(height)/2-lineHeight/2,toFloat,(height)/2+lineHeight/2,waveLinePaint)
+        }
     }
 
     override fun onTouchEvent(event: MotionEvent?): Boolean {

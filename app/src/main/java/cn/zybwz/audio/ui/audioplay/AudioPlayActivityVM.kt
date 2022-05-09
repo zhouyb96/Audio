@@ -42,7 +42,29 @@ class AudioPlayActivityVM:BaseViewModel() {
         toolBeans.add(ToolBean(R.drawable.ic_baby,"娃娃音"))
         toolBeans.add(ToolBean(R.drawable.ic_sorround,"环绕"))
         toolBeans.add(ToolBean(R.drawable.ic_robot,"机器人"))
-        toolBeans.add(ToolBean(R.drawable.ic_klok,"卡拉OK"))
+//        toolBeans.add(ToolBean(R.drawable.ic_klok,"卡拉OK"))
+        return toolBeans
+    }
+
+    fun getProcessTool():MutableList<ToolBean>{
+        val toolBeans= mutableListOf<ToolBean>()
+        toolBeans.add(ToolBean(R.drawable.ic_null,"无"))
+        toolBeans.add(ToolBean(R.drawable.ic_low_cut,"低切150"))
+        toolBeans.add(ToolBean(R.drawable.ic_noise_gate,"降噪"))
+        return toolBeans
+    }
+
+    fun getFormatTool():MutableList<ToolBean>{
+        val toolBeans= mutableListOf<ToolBean>()
+        toolBeans.add(ToolBean(R.drawable.mp3,"MP3"))
+        toolBeans.add(ToolBean(R.drawable.aac,"AAC"))
+        toolBeans.add(ToolBean(R.drawable.wav,"WAV"))
+        return toolBeans
+    }
+    fun getTranslateTool():MutableList<ToolBean>{
+        val toolBeans= mutableListOf<ToolBean>()
+        toolBeans.add(ToolBean(R.drawable.chinese,"中文"))
+        toolBeans.add(ToolBean(R.drawable.english,"英文"))
         return toolBeans
     }
 }

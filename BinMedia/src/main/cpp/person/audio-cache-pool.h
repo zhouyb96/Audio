@@ -14,6 +14,7 @@ extern "C" {
     void destroy();
     void pool_seek();
 void pool_seek_ok();
+    void setMuteDB(char db);
 #ifdef __cplusplus
 }
 #endif

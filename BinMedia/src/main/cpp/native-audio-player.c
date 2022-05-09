@@ -29,6 +29,7 @@ static void log_callback_test2(void *ptr, int level, const char *fmt, va_list vl
  Java_cn_zybwz_binmedia_BinPlayer_seek(JNIEnv *env, jobject thiz, jlong time) {
     pool_seek();
     seek((long )time);
+    LOGE("seek ok pre");
     pool_seek_ok();
 
 }
@@ -95,19 +96,27 @@ Java_cn_zybwz_binmedia_BinPlayer_addFilter(JNIEnv *env, jobject thiz, jint type)
     }
     AVFilterContext* avFilterContext= buildAVFilterContextStr(arrayFilter[type].name,arrayFilter[type].filter_str);
     LOGE("avFilterContext %s",avFilterContext->name);
-    add_filter(avFilterContext);
+    add_filter(avFilterContext,1);
     enableFilter=1;
 }
 
 JNIEXPORT void JNICALL
+Java_cn_zybwz_binmedia_BinPlayer_speed(JNIEnv *env, jobject thiz, jdouble speed) {
+    opensl_speech((double )speed);
+}
+
+JNIEXPORT void JNICALL
 Java_cn_zybwz_binmedia_BinPlayer_addFilterCustom(JNIEnv *env, jobject thiz, jstring name,
-                                                 jstring str) {
+                                                 jstring str,jint filter) {
     LOGE("avFilterContext addFilterCustom");
     const char* j2name=(*env)->GetStringUTFChars(env,name,JNI_FALSE);
+
     const char* j2str=(*env)->GetStringUTFChars(env,str,JNI_FALSE);
     AVFilterContext* avFilterContext= buildAVFilterContextStr(j2name,j2str);
-
-    add_filter(avFilterContext);
+    if (avFilterContext==NULL)
+        return;
+    LOGE("avFilterContext addFilterCustom %s",avFilterContext->name);
+    add_filter(avFilterContext,filter);
     enableFilter=1;
 }
 

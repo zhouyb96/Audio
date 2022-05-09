@@ -643,7 +643,10 @@ extern char *qsv_device;
 #endif
 extern HWDevice *filter_hw_device;
 
-
+/**
+ * Register a program-specific cleanup routine.
+ */
+void register_progress(void (*cb)(long progress));
 void term_init(void);
 void term_exit(void);
 

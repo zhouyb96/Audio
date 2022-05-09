@@ -170,6 +170,11 @@ static int restore_tty;
 static void free_input_threads(void);
 #endif
 
+static void (*program_progress)(long progress);
+void register_progress(void (*cb)(long progress))
+{
+    program_progress = cb;
+}
 /* sub2video hack:
    Convert subtitles to video with alpha to insert them in filter graphs.
    This is a temporary solution until libavfilter gets real subtitles support.
@@ -1827,6 +1832,7 @@ static void print_report(int is_last_report, int64_t timer_start, int64_t cur_ti
 
     secs = FFABS(pts) / AV_TIME_BASE;
     us = FFABS(pts) % AV_TIME_BASE;
+    program_progress(secs);
     mins = secs / 60;
     secs %= 60;
     hours = mins / 60;

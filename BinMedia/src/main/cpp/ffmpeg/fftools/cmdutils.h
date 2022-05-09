@@ -57,6 +57,12 @@ extern int hide_banner;
 void register_exit(void (*cb)(int ret));
 
 /**
+ * Register a program-specific cleanup routine.
+ */
+void register_status(void (*cb)(int ret));
+
+
+/**
  * Wraps exit with a program-specific cleanup routine.
  */
 void exit_program(int ret);

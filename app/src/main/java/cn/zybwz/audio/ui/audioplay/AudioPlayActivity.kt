@@ -2,8 +2,6 @@ package cn.zybwz.audio.ui.audioplay
 
 import android.content.Context
 import android.content.Intent
-import androidx.appcompat.app.AppCompatActivity
-import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
@@ -11,20 +9,18 @@ import android.view.View
 import androidx.activity.viewModels
 import androidx.recyclerview.widget.GridLayoutManager
 import cn.zybwz.audio.R
-import cn.zybwz.audio.adapter.FilterAdapter
 import cn.zybwz.audio.adapter.ToolAdapter
 import cn.zybwz.audio.bean.RecordBean
 import cn.zybwz.audio.bean.ToolBean
 import cn.zybwz.audio.databinding.ActivityAudioPlayBinding
 import cn.zybwz.audio.ui.audioedit.crop.AudioCropActivity
-import cn.zybwz.audio.ui.audioedit.fade.AudioFilterFragment
 import cn.zybwz.audio.ui.audioedit.filter.FilterFragment
 import cn.zybwz.audio.ui.vosk.VoskFragment
 import cn.zybwz.audio.utils.ms2Format
 import cn.zybwz.base.BaseActivity
+import cn.zybwz.base.utils.ToastUtil
 import cn.zybwz.binmedia.BinPlayer
-import cn.zybwz.binmedia.FFmpegCmd
-import cn.zybwz.binmedia.getEchoLiveDefault
+import cn.zybwz.binmedia.FilterUtil
 import cn.zybwz.binmedia.widget.WaveView
 import java.text.SimpleDateFormat
 
@@ -179,13 +175,70 @@ class AudioPlayActivity : BaseActivity<AudioPlayActivityVM,ActivityAudioPlayBind
                             viewModel.filterIndex=position-1
                             when(position){
                                 0->{
-
-
+                                    binPlayer.addFilter(-1)
                                 }
-                                1->{
-                                    binPlayer.addFilterCustom("aecho", getEchoLiveDefault())
+                                else->{
+
+                                    val filterInfo = FilterUtil.getLive(position-1)
+                                    Log.e(TAG, "onClick: ${filterInfo?.buildLiveCmd()}", )
+                                    if (filterInfo==null){
+                                        ToastUtil.show("功能未实现")
+                                        return
+                                    }
+                                    binPlayer.addFilter(-1)
+                                    binPlayer.addLiveFilter(filterInfo)
+//                                    val buildLiveCmd = filterInfo.buildLiveCmd()
+//                                    if (buildLiveCmd.contains(",")){
+//                                        val splitCmd = buildLiveCmd.split(",")
+//                                        val splitName = filterInfo.name.split(",")
+//                                        for ((i,cmd) in splitCmd.withIndex()){
+//                                            binPlayer.addFilterCustom(splitName[i], cmd)
+//                                        }
+//
+//                                    }else binPlayer.addFilterCustom(filterInfo.name, buildLiveCmd)
                                 }
                             }
+                        }
+                    }
+                    binding.childTool.adapter=editTool
+                }
+                3->{
+                    editTool.addData(viewModel.getProcessTool())
+                    editTool.event=object :ToolAdapter.Event{
+                        override fun onClick(toolBean: ToolBean, position: Int) {
+                            viewModel.filterIndex=position-1
+                            when(position){
+                                0->{
+                                    binPlayer.addFilter(-1)
+                                }
+                                else->{
+                                    val filterInfo = FilterUtil.getProcess(position-1)
+                                    Log.e(TAG, "onClick: ${filterInfo?.buildLiveCmd()}", )
+                                    if (filterInfo==null){
+                                        ToastUtil.show("功能未实现")
+                                        return
+                                    }
+                                    binPlayer.addLiveFilter(filterInfo)
+                                }
+                            }
+                        }
+                    }
+                    binding.childTool.adapter=editTool
+                }
+                4->{
+                    editTool.addData(viewModel.getFormatTool())
+                    editTool.event=object :ToolAdapter.Event{
+                        override fun onClick(toolBean: ToolBean, position: Int) {
+
+                        }
+                    }
+                    binding.childTool.adapter=editTool
+                }
+                5->{
+                    editTool.addData(viewModel.getTranslateTool())
+                    editTool.event=object :ToolAdapter.Event{
+                        override fun onClick(toolBean: ToolBean, position: Int) {
+
                         }
                     }
                     binding.childTool.adapter=editTool

@@ -64,7 +64,6 @@ void self_deal_packet(AVCodecContext *ctx,AVFrame *frame,AVPacket * packet)
             LOGE("BBB NULL");
         }
         if (enableFilter){
-            LOGE("enableFilter");
             filterBuffer(sendBuffer,frame,ctx);
         }
         swr_convert(swrContext,&sendBuffer,s,(const uint8_t **)frame->data,frame->nb_samples);
@@ -232,7 +231,7 @@ void* sourceThread(void * p){
 }
 
 void seek(long time){
-    int64_t t=(int64_t)((time/1000.00)*AV_TIME_BASE);
+    int64_t t=(int64_t)((time/1000.00/(10/4.41))*AV_TIME_BASE);
     LOGE("seek t%lld",t);
     av_seek_frame(avFormatContext,-1,t,AVSEEK_FLAG_ANY );
 

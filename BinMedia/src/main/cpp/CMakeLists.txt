@@ -231,6 +231,15 @@ add_library( # Sets the name of the library.
         audio-cache-pool.c)
 
 add_library( # Sets the name of the library.
+        sonic
+
+        # Sets the library as a shared library.
+        SHARED
+
+        # Provides a relative path to your source file(s).
+        sonic.c)
+
+add_library( # Sets the name of the library.
         ffmpeg-cmd
 
         # Sets the library as a shared library.
@@ -242,6 +251,7 @@ add_library( # Sets the name of the library.
         ffmpeg/fftools/ffmpeg_opt.c
         ffmpeg/fftools/ffmpeg_filter.c
         ffmpeg/fftools/ffmpeg_hw.c
+        native-audio-wave.c
         ffmpeg-cmd.c
         )
 
@@ -371,7 +381,7 @@ target_link_libraries(opensl-player
         OpenSLES
         ${log-lib}
         audio-cache-pool
-
+        sonic
         )
 
 target_link_libraries(audio-cache-pool

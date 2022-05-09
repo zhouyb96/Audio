@@ -17,7 +17,7 @@ AVFilterContext* sink_filter_context=NULL;
 struct FilterNode filterNodes={NULL,NULL,NULL};
 int init_filter_graph();
 
-void add_filter(AVFilterContext* avFilter);
+void add_filter(AVFilterContext* avFilter,int filter);
 
 void remove_filter(AVFilterContext* avFilter);
 void remove_all_filter();
