@@ -20,6 +20,7 @@ import cn.zybwz.audio.utils.ms2Format
 import cn.zybwz.base.BaseActivity
 import cn.zybwz.base.utils.ToastUtil
 import cn.zybwz.binmedia.BinPlayer
+import cn.zybwz.binmedia.FFmpegCmd
 import cn.zybwz.binmedia.FilterUtil
 import cn.zybwz.binmedia.widget.WaveView
 import java.text.SimpleDateFormat
@@ -60,6 +61,13 @@ class AudioPlayActivity : BaseActivity<AudioPlayActivityVM,ActivityAudioPlayBind
         binding.tvTotalDuration.text= ms2Format(audioBean.duration/10)
         binding.event=this
         binding.waveView.setType(WaveView.TYPE_PLAYING)
+        Thread{
+            val wave = FFmpegCmd().getWave(audioBean.path, 5)
+            runOnUiThread {
+                binding.waveView.waveList.addAll(wave.toMutableList())
+                binding.waveView.postInvalidate()
+            }
+        }.start()
         binding.waveView.maxDuration=audioBean.duration
         binding.waveView.touchEvent= object :WaveView.TouchEvent{
             override fun onTouchDown() {
@@ -70,6 +78,8 @@ class AudioPlayActivity : BaseActivity<AudioPlayActivityVM,ActivityAudioPlayBind
 
             override fun onProgress(progress: Long) {
                 currentDuration=progress
+                if (viewModel.playStatusData.value!=1)
+                    binPlayer.seek(currentDuration)
                 binding.tvPlayDuration.text=ms2Format(progress/10)
                 needSeek=true
             }
@@ -113,7 +123,7 @@ class AudioPlayActivity : BaseActivity<AudioPlayActivityVM,ActivityAudioPlayBind
                 binPlayer.play(audioBean.path)
                 if (needSeek){
                     binPlayer.pause()
-                    binPlayer.seek(currentDuration)
+//                    binPlayer.seek(currentDuration)
                     binPlayer.resume()
                 }
             }
@@ -134,14 +144,20 @@ class AudioPlayActivity : BaseActivity<AudioPlayActivityVM,ActivityAudioPlayBind
         if (l<0)
             l=0
         binPlayer.seek(l)
+        currentDuration=l
+        binding.tvPlayDuration.text=ms2Format(currentDuration/10)
+        binding.waveView.setCurrentTime(l)
     }
 
     override fun onForward(view: View) {
         var l = currentDuration + 3000
-
+        Log.e(TAG, "onForward: $l $currentDuration ${audioBean.duration}", )
         if (l>audioBean.duration)
             l=audioBean.duration
         binPlayer.seek(l)
+        currentDuration=l
+        binding.tvPlayDuration.text=ms2Format(currentDuration/10)
+        binding.waveView.setCurrentTime(l)
     }
 
     private var navigationLevel=0
@@ -343,15 +359,16 @@ class AudioPlayActivity : BaseActivity<AudioPlayActivityVM,ActivityAudioPlayBind
             Handler(Looper.getMainLooper()).post {
                 binding.tvPlayDuration.text=ms2Format(it/10)
                 binding.waveView.setCurrentTime(it)
-                currentDuration=it*10
+                currentDuration=it
             }
             //Log.e(TAG, "initData: $it")
         }
     }
 
     override fun onDestroy() {
-        binPlayer.stop()
+        binPlayer.seek(audioBean.duration)
         binPlayer.destroy()
+
         super.onDestroy()
     }
 }

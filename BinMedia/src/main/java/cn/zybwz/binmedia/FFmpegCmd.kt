@@ -39,7 +39,7 @@ class FFmpegCmd {
             System.loadLibrary("ffmpeg-cmd")
         }
     }
-
+    external fun getWave(file: String,sample:Int):ByteArray
     external fun run(cmd: Array<String?>?)
     fun crop(file: String, startTime: Long, duration: Long, out: String) {
         // ms2FFFormat(startTime)

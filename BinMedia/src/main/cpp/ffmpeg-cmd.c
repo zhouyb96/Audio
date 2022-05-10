@@ -24,7 +24,7 @@ JNIEXPORT jbyteArray JNICALL
 Java_cn_zybwz_binmedia_FFmpegCmd_getWave(JNIEnv *env, jobject thiz, jstring file, jint sample) {
     const char* file_path=(const char *)(*env)->GetStringUTFChars(env,file,0);
     unsigned char * wave=decode_wave(file_path,sample);
-    size_t wave_length=strlen(wave);
+    size_t wave_length=strlen (wave);
     LOGE("wave_length %zu",wave_length);
     jbyteArray array=(*env)->NewByteArray(env,wave_length);
     LOGE("wave_length2 %zu",wave_length);

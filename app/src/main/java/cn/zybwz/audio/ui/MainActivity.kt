@@ -102,7 +102,7 @@ class MainActivity : BaseActivity<MainActivityVM,ActivityMainBinding>(), IMainAc
             override fun onWave(db: Int) {
                 Log.e(TAG, "onWave: $db", )
                 Handler(Looper.getMainLooper()).post {
-                    binding.waveView.waveList.add(db)
+                    binding.waveView.waveList.add(db.toByte())
                 }
             }
 

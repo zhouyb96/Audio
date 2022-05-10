@@ -18,7 +18,7 @@ unsigned char decoding=0;
 unsigned char is_planar=0;
 char enableFilter=0;
 SwrContext * swrContext;
-long startTime=1000;
+long startTime=0;
 long endTime=-1;
 
 void set_decode_duration(long start,long stop){
@@ -213,6 +213,7 @@ int decode()
         }
     }
     send_frame(NULL,0);
+    avformat_close_input(&avFormatContext);
     avformat_free_context(avFormatContext);
     avFormatContext=NULL;
     avcodec_free_context(&c);
@@ -220,21 +221,33 @@ int decode()
     av_packet_free(&pkt);
     return 0;
 }
+void decoder_release(){
+    decoding=0;
+}
+
 
 void intercept_decode(){
     decoding=0;
 }
 
 void* sourceThread(void * p){
+    if (startTime>0){
+        seek(startTime);
+        startTime=0;
+    }
     decode();
     pthread_exit(NULL);
 }
 
 void seek(long time){
-    int64_t t=(int64_t)((time/1000.00/(10/4.41))*AV_TIME_BASE);
+    if (avFormatContext==NULL){
+        startTime=time;
+        return;
+    }
+    int64_t t=(int64_t)((time/1000.00)*AV_TIME_BASE);
     LOGE("seek t%lld",t);
-    av_seek_frame(avFormatContext,-1,t,AVSEEK_FLAG_ANY );
 
+    av_seek_frame(avFormatContext,-1,t,AVSEEK_FLAG_ANY );
 }
 
 int decode_audio(const char *file_name){

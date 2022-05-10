@@ -319,7 +319,7 @@ unsigned char* decode_wave(const char *file_name,int sample){
     wave_index=0;
     byte_size=sample_rate*channels*bit_format/8/wave_sample;
     pcm_buffer=malloc(byte_size);
-    wave_count=((duration+1000)/1000)*10;
+    wave_count=((duration+1000)/1000)*wave_sample;
     if (wave_buffer){
         free(wave_buffer);
         wave_buffer=NULL;

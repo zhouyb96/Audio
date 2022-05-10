@@ -27,10 +27,10 @@ static void log_callback_test2(void *ptr, int level, const char *fmt, va_list vl
 
  JNIEXPORT void JNICALL
  Java_cn_zybwz_binmedia_BinPlayer_seek(JNIEnv *env, jobject thiz, jlong time) {
-    pool_seek();
+//    pool_seek();
     seek((long )time);
-    LOGE("seek ok pre");
-    pool_seek_ok();
+    LOGE("seek ok pre %ld",time);
+//    pool_seek_ok();
 
 }
 
@@ -79,6 +79,7 @@ Java_cn_zybwz_binmedia_BinPlayer_stop(JNIEnv *env, jobject thiz) {
 
 JNIEXPORT void JNICALL
 Java_cn_zybwz_binmedia_BinPlayer_destroy(JNIEnv *env, jobject thiz) {
+    decoder_release();
     destroy();
 }
 

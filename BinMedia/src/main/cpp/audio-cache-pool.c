@@ -151,6 +151,9 @@ void pool_seek_ok(){
 }
 
 void destroy(){
+    pthread_cond_broadcast(&playFinish);
+    pthread_cond_broadcast(&decodeFinish);
+    pthread_mutex_unlock(&mutex);
     pthread_mutex_destroy( &mutex );
     pthread_cond_destroy( &playFinish );
     pthread_cond_destroy( &decodeFinish );
