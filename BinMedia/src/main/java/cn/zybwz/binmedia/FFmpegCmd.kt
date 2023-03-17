@@ -1,5 +1,6 @@
 package cn.zybwz.binmedia
 
+import cn.zybwz.binmedia.bean.AudioInfo
 import cn.zybwz.binmedia.ms2FFFormat
 
 /**
@@ -15,6 +16,10 @@ class FFmpegCmd {
     private val gateCmd = "ffmpeg -i %s -filter agate=knee=1:ratio=1.5:range=0.08 %s" //降噪
     private val cropCmd = "ffmpeg -i %s -ss %s -t %s -acodec copy %s"
     private val pcm2Mp3 = "ffmpeg -f s16le -ar 44100 -ac 2 -i %s -ar 44100 -ac 2 -y %s"
+    private val mp32Wav = "ffmpeg -i %s -acodec pcm_s16le -ac 2 -ar 44100 %s"
+    private val mp32AAC = "ffmpeg -i %s -acodec libfdk_aac -vbr 5 %s"
+
+    //private val pcm2Mp3 = "ffmpeg -f s16le -ar 44100 -ac 2 -i %s -ar 44100 -ac 2 -y %s"
 
     /**
      * 滤镜
@@ -41,6 +46,9 @@ class FFmpegCmd {
     }
     external fun getWave(file: String,sample:Int):ByteArray
     external fun run(cmd: Array<String?>?)
+
+    external fun readInfo(file: String):AudioInfo
+
     fun crop(file: String, startTime: Long, duration: Long, out: String) {
         // ms2FFFormat(startTime)
         val format = String.format(
@@ -57,6 +65,20 @@ class FFmpegCmd {
         val format = String.format(pcm2Mp3, file, out)
         run(format.split(" ").toTypedArray())
     }
+    fun mp32Wav(file: String, out: String) {
+        val format = String.format(mp32Wav, file, out)
+        run(format.split(" ").toTypedArray())
+    }
+
+    fun mp32AAC(file: String, out: String) {
+        val format = String.format(mp32AAC, file, out)
+        run(format.split(" ").toTypedArray())
+    }
+
+    fun saveToWav(){
+
+    }
+
 
     fun echoMountain(){
 

@@ -47,6 +47,38 @@ jobject thiz, jobjectArray cmd) {
     }
     exc(argc,argv);
 }
+
+JNIEXPORT jobject JNICALL
+Java_cn_zybwz_binmedia_FFmpegCmd_readInfo(JNIEnv *env, jobject thiz, jstring file) {
+    const char* file_path=(const char *)(*env)->GetStringUTFChars(env,file,0);
+    struct FFmpegAudioInfo* fFmpegAudioInfo;
+    int res = parse_info(file_path,fFmpegAudioInfo);
+    jclass audioInfoClass = (*env)->FindClass(env, "cn/zybwz/binmedia/bean/AudioInfo");
+    // 获取类的构造函数，记住这里是调用无参的构造函数
+    jmethodID id = (*env)->GetMethodID(env, audioInfoClass, "<init>", "()V");
+    // 创建一个新的对象
+    jobject audioInfo = (*env)->NewObject(env, audioInfoClass, id);
+    if (res==0){
+// 对应的Java属性
+        jfieldID c = (*env)->GetFieldID(env, audioInfoClass, "channels", "I");
+        jfieldID s = (*env)->GetFieldID(env, audioInfoClass, "sampleRate", "I");
+        jfieldID d = (*env)->GetFieldID(env, audioInfoClass, "duration", "J");
+        jfieldID b = (*env)->GetFieldID(env, audioInfoClass, "bitFormat", "I");
+        jfieldID as = (*env)->GetFieldID(env, audioInfoClass, "bitType", "I");
+        //属性赋值，person为传入的Java对象
+        int fc=fFmpegAudioInfo->channels;
+        int fs=fFmpegAudioInfo->sample_rate;
+        long fd=fFmpegAudioInfo->duration;
+        int fb=fFmpegAudioInfo->bit_format;
+        (*env)->SetIntField(env, audioInfo, c, fc );
+        (*env)->SetIntField(env, audioInfo, s, fs);
+        (*env)->SetLongField(env, audioInfo, d,fd );
+        (*env)->SetIntField(env, audioInfo, b, fb);
+//        (*env)->SetIntField(env, audioInfo, as, (int )asf);
+    }
+    return audioInfo;
+}
+
 static void exit_call(int ret){
     LOGE("exit_call %d", ret);
 }

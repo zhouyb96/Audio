@@ -10,23 +10,15 @@ import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
 
-class CropView(context: Context, attributeSet: AttributeSet):View(context,attributeSet){
+class CropView(context: Context, attributeSet: AttributeSet):BaseEditView(context,attributeSet){
     private val paintBoardLine=Paint()
     private val paintBeCrop=Paint()
     private val scaleTextPaint=Paint()
 
-    private var duration:Long=0L
     private var downX=0f
     private var leftX=0f
     private var rightX=0f
     private var dragType=0 //0 未进入拖拽模式 1 左拖拽 2 右拖拽
-
-    private var currentTime=0L
-    private var pxTime=12000L
-
-    private val largeScaleTime=2000
-
-    private var msPerPx:Double=0.00
 
     var cropEvent:CropEvent?=null
 
@@ -49,32 +41,31 @@ class CropView(context: Context, attributeSet: AttributeSet):View(context,attrib
 
     }
 
-    fun setDuration(duration:Long){
-        this.duration=duration
-        if (duration>=12000){
-            rightX=width.toFloat()
-            this.pxTime=duration
-        }else {
-            rightX=(duration/12000.00f)*width
-        }
-
-        invalidate()
-    }
+//    fun setDuration(duration:Long){
+//        this.duration=duration
+//        if (duration>=12000){
+//            rightX=width.toFloat()
+//            this.pxTime=duration
+//        }else {
+//            rightX=(duration/12000.00f)*width
+//        }
+//
+//        invalidate()
+//    }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
         rightX=w.toFloat()
         msPerPx=width.toDouble()/pxTime
-        rightX=(duration/12000.00f)*width
+        rightX=(getDuration()/12000.00f)*width
     }
 
-    override fun onDraw(canvas: Canvas?) {
-        super.onDraw(canvas)
-        canvas?:return
-        drawScaleText(canvas)
-        drawBoardLine(canvas)
-        drawBeCrop(canvas)
-    }
+//    override fun onDraw(canvas: Canvas?) {
+//        super.onDraw(canvas)
+//        canvas?:return
+//        drawBoardLine(canvas)
+//        drawBeCrop(canvas)
+//    }
 
     private fun drawBoardLine(canvas: Canvas){
         canvas.drawLine(leftX,0f,leftX,height.toFloat(),paintBoardLine)
@@ -83,22 +74,9 @@ class CropView(context: Context, attributeSet: AttributeSet):View(context,attrib
 
     private fun drawBeCrop(canvas: Canvas){
         val rectL = Rect(0, 0, leftX.toInt(), height)
-        val rectR = Rect(rightX.toInt(), 0, (msPerPx*duration).toInt(), height)
+        val rectR = Rect(rightX.toInt(), 0, (msPerPx*getDuration()).toInt(), height)
         canvas.drawRect(rectL,paintBeCrop)
         canvas.drawRect(rectR,paintBeCrop)
-
-    }
-
-    private fun drawScaleText(canvas: Canvas?){
-        val offset = currentTime % largeScaleTime
-        for (i in 0..7){
-            val l = ((currentTime-offset)+i*largeScaleTime)//
-            val toFloat = ((l-currentTime) * msPerPx ).toFloat()
-            for (j in 1..3){
-                canvas?.drawLine(toFloat+(j*largeScaleTime*msPerPx/4).toFloat(),36f,toFloat+(j*largeScaleTime*msPerPx/4).toFloat(),51f,scaleTextPaint)
-            }
-            canvas?.drawLine(toFloat,36f,toFloat,66f,scaleTextPaint)
-        }
 
     }
 
@@ -114,6 +92,8 @@ class CropView(context: Context, attributeSet: AttributeSet):View(context,attrib
                 if (downX<rightX+30&&downX>rightX-30){
                     dragType=2
                 }
+                if (dragType==0)
+                    return super.onTouchEvent(event)
             }
             MotionEvent.ACTION_MOVE->{
 
@@ -131,8 +111,8 @@ class CropView(context: Context, attributeSet: AttributeSet):View(context,attrib
                     2->{
                         if (event.x<leftX)
                             return true
-                        if (event.x>msPerPx*duration)
-                            rightX=(msPerPx*duration).toFloat()
+                        if (event.x>msPerPx*getDuration())
+                            rightX=(msPerPx*getDuration()).toFloat()
                         else rightX=event.x
                     }
                 }
@@ -149,6 +129,12 @@ class CropView(context: Context, attributeSet: AttributeSet):View(context,attrib
             }
         }
         return true
+    }
+
+    override fun drawCustom(canvas: Canvas?) {
+        canvas?:return
+        drawBoardLine(canvas)
+        drawBeCrop(canvas)
     }
 
     interface CropEvent{

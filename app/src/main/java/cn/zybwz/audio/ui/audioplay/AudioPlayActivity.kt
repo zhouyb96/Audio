@@ -15,13 +15,17 @@ import cn.zybwz.audio.bean.ToolBean
 import cn.zybwz.audio.databinding.ActivityAudioPlayBinding
 import cn.zybwz.audio.ui.audioedit.crop.AudioCropActivity
 import cn.zybwz.audio.ui.audioedit.filter.FilterFragment
+import cn.zybwz.audio.ui.audioedit.format.TransformActivity
 import cn.zybwz.audio.ui.vosk.VoskFragment
 import cn.zybwz.audio.utils.ms2Format
+import cn.zybwz.audio.view.AudioInfoDialog
+import cn.zybwz.audio.view.FormatRenameDialog
 import cn.zybwz.base.BaseActivity
 import cn.zybwz.base.utils.ToastUtil
 import cn.zybwz.binmedia.BinPlayer
 import cn.zybwz.binmedia.FFmpegCmd
 import cn.zybwz.binmedia.FilterUtil
+import cn.zybwz.binmedia.bean.AudioInfo
 import cn.zybwz.binmedia.widget.WaveView
 import java.text.SimpleDateFormat
 
@@ -38,6 +42,8 @@ class AudioPlayActivity : BaseActivity<AudioPlayActivityVM,ActivityAudioPlayBind
 //    private  val audioFragment=AudioFragment()
     private var voskFragment:VoskFragment?=null
     private var filterFragment:FilterFragment?=null
+    private var fFmpegCmd = FFmpegCmd()
+    private var readInfo:AudioInfo?=null
     override fun titleBar(): View? {
         binding.ivBack.setOnClickListener {
             finish()
@@ -53,6 +59,10 @@ class AudioPlayActivity : BaseActivity<AudioPlayActivityVM,ActivityAudioPlayBind
         })
     }
 
+    private val audioInfoDialog by lazy {
+        val dialog = AudioInfoDialog(this)
+        dialog
+    }
     override fun initView() {
         val s = intent.getSerializableExtra(PLAY_MUSIC)?:return
         audioBean = s as RecordBean
@@ -62,11 +72,15 @@ class AudioPlayActivity : BaseActivity<AudioPlayActivityVM,ActivityAudioPlayBind
         binding.event=this
         binding.waveView.setType(WaveView.TYPE_PLAYING)
         Thread{
-            val wave = FFmpegCmd().getWave(audioBean.path, 5)
+            val wave = fFmpegCmd.getWave(audioBean.path, 5)
+
+
             runOnUiThread {
                 binding.waveView.waveList.addAll(wave.toMutableList())
                 binding.waveView.postInvalidate()
+                readInfo = FFmpegCmd().readInfo(audioBean.path)
             }
+
         }.start()
         binding.waveView.maxDuration=audioBean.duration
         binding.waveView.touchEvent= object :WaveView.TouchEvent{
@@ -97,7 +111,6 @@ class AudioPlayActivity : BaseActivity<AudioPlayActivityVM,ActivityAudioPlayBind
             override fun onClick(toolBean: ToolBean, position: Int) {
                 showNavigation(position+1)
             }
-
         }
         binding.childBack.setOnClickListener {
             showNavigation(0)
@@ -161,6 +174,28 @@ class AudioPlayActivity : BaseActivity<AudioPlayActivityVM,ActivityAudioPlayBind
     }
 
     private var navigationLevel=0
+    private val formatRenameDialog by lazy {
+        val dialog = FormatRenameDialog(this@AudioPlayActivity)
+        dialog.event=object : FormatRenameDialog.Event{
+            override fun onConfirm(name: String,type:String) {
+                val fFmpegCmd = FFmpegCmd()
+                when(type){
+                    "MP3"->{
+
+                    }
+                    "AAC"->{
+                        fFmpegCmd.mp32AAC(audioBean.path,audioBean.path.replace(audioBean.name,name))
+                    }
+                    "WAV"->{
+                        fFmpegCmd.mp32Wav(audioBean.path,audioBean.path.replace(audioBean.name,name))
+                    }
+                }
+                dialog.dismiss()
+            }
+
+        }
+        dialog
+    }
     private fun showNavigation(level:Int){
         navigationLevel=level
         if (navigationLevel==0){
@@ -203,15 +238,6 @@ class AudioPlayActivity : BaseActivity<AudioPlayActivityVM,ActivityAudioPlayBind
                                     }
                                     binPlayer.addFilter(-1)
                                     binPlayer.addLiveFilter(filterInfo)
-//                                    val buildLiveCmd = filterInfo.buildLiveCmd()
-//                                    if (buildLiveCmd.contains(",")){
-//                                        val splitCmd = buildLiveCmd.split(",")
-//                                        val splitName = filterInfo.name.split(",")
-//                                        for ((i,cmd) in splitCmd.withIndex()){
-//                                            binPlayer.addFilterCustom(splitName[i], cmd)
-//                                        }
-//
-//                                    }else binPlayer.addFilterCustom(filterInfo.name, buildLiveCmd)
                                 }
                             }
                         }
@@ -242,10 +268,27 @@ class AudioPlayActivity : BaseActivity<AudioPlayActivityVM,ActivityAudioPlayBind
                     binding.childTool.adapter=editTool
                 }
                 4->{
+//                    val intent = Intent(this@AudioPlayActivity, TransformActivity::class.java)
+//                    intent.putExtra("path",audioBean.path)
+//                    startActivity(intent)
+//                    return
                     editTool.addData(viewModel.getFormatTool())
                     editTool.event=object :ToolAdapter.Event{
                         override fun onClick(toolBean: ToolBean, position: Int) {
-
+                            var fileName=""
+                            when(position){
+                                0->{
+                                    fileName=audioBean.name.substring(0,audioBean.name.indexOfLast { it=='.'})+".mp3"
+                                }
+                                1->{
+                                    fileName=audioBean.name.substring(0,audioBean.name.indexOfLast { it=='.'})+".aac"
+                                }
+                                2->{
+                                    fileName=audioBean.name.substring(0,audioBean.name.indexOfLast { it=='.'})+".wav"
+                                }
+                            }
+                            formatRenameDialog.show()
+                            formatRenameDialog.setName(fileName)
                         }
                     }
                     binding.childTool.adapter=editTool
@@ -320,6 +363,14 @@ class AudioPlayActivity : BaseActivity<AudioPlayActivityVM,ActivityAudioPlayBind
 
 
         begin.commit()
+    }
+
+    override fun onInfo(view: View) {
+
+        audioInfoDialog.show()
+        readInfo?.let {
+            audioInfoDialog.setAudioInfo(audioBean.path,it)
+        }
     }
 
     private val playListener = object : BinPlayer.IStatusChangeListener {

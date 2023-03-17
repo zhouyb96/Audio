@@ -23,7 +23,9 @@
 #include <unistd.h>
 #include <SLES/OpenSLES.h>
 #include <SLES/OpenSLES_Android.h>
-
+#include "native-audio-common.h"
+int parse_info(const char * file_name,struct FFmpegAudioInfo * fFmpegAudioInfo);
 unsigned char* decode_wave(const char *file_name,int sample);
+//int parse_info(const char * file_name);
 
 #endif //JNIDEMO_NATIVE_AUDIO_DECODE_H

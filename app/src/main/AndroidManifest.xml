@@ -13,6 +13,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Audio">
         <activity
+            android:name=".ui.audioedit.format.TransformActivity"
+            android:exported="false" />
+        <activity
             android:name=".ui.vosk.VoskActivity"
             android:exported="false" />
         <activity android:name=".ui.audioedit.crop.AudioCropActivity" />

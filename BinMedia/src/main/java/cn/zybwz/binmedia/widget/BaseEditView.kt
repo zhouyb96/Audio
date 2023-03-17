@@ -8,9 +8,14 @@ import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
 
+/**
+ * 音频编辑视图基类
+ * 后续需要修改
+ * 目前只支持到播放波形
+ */
 abstract class BaseEditView(context: Context, attributeSet: AttributeSet): View(context,attributeSet) {
     private val scaleTextPaint= Paint()
-    private var duration:Long=10000L
+    private var duration:Long=0L
     private var currentTime=0L
     var pxTime=12000L
 
@@ -33,6 +38,8 @@ abstract class BaseEditView(context: Context, attributeSet: AttributeSet): View(
         baselinePaint.strokeWidth=3f
         baselinePaint.isAntiAlias=true
         baselinePaint.style=Paint.Style.STROKE
+
+        setBackgroundColor(Color.parseColor("#eeeeee"))
     }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
@@ -105,6 +112,7 @@ abstract class BaseEditView(context: Context, attributeSet: AttributeSet): View(
 
     fun setDuration(duration:Long){
         this.duration=duration
+        this.maxDuration=duration
         if (duration>=12000){
             rightX=width.toFloat()
             this.pxTime=duration
@@ -113,6 +121,10 @@ abstract class BaseEditView(context: Context, attributeSet: AttributeSet): View(
         }
 
         invalidate()
+    }
+
+    fun getDuration():Long{
+        return duration
     }
 
     fun setCurrentTime(current:Long){

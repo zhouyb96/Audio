@@ -9,7 +9,9 @@ import android.view.MotionEvent
 import android.view.View
 import java.util.ArrayList
 
-
+/**
+ * 支持录制和播放波形
+ */
 open class WaveView(context: Context,attributeSet: AttributeSet):BaseEditView(context,attributeSet){
     companion object{
         const val TYPE_RECORDING=0;
@@ -28,11 +30,6 @@ open class WaveView(context: Context,attributeSet: AttributeSet):BaseEditView(co
         waveLinePaint.strokeWidth=6f
         waveLinePaint.isAntiAlias=true
         waveLinePaint.style=Paint.Style.FILL
-//        //todo 模拟分贝列表 得具体处理
-//        for (i in 0 .. 20){
-//            waveList.add(((i*10/2.00).toInt()))
-//        }
-        setBackgroundColor(Color.parseColor("#eeeeee"))
     }
 
 
@@ -41,6 +38,9 @@ open class WaveView(context: Context,attributeSet: AttributeSet):BaseEditView(co
         setCurrentTime(0)
     }
 
+    /**
+     * 绘制录制波形
+     */
     private fun drawWave(canvas: Canvas?){
         val start=if(((getCurrentTime()- pxTime/2)/200)>0)
             (getCurrentTime()- pxTime/2)/200
@@ -59,6 +59,9 @@ open class WaveView(context: Context,attributeSet: AttributeSet):BaseEditView(co
         }
     }
 
+    /**
+     * 绘制播放波形
+     */
     private fun drawPlayWave(canvas: Canvas?){
         val start=if(((getCurrentTime()- pxTime/2)/200)>0)
             (getCurrentTime()- pxTime/2)/200

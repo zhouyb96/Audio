@@ -4,24 +4,26 @@
 #include "person/native-audio-wave.h"
 AVFormatContext  * avFormatContext = NULL;
 AVCodecContext *c= NULL;
-
+int sample_rate=44100;
+int channels=2;
+int bit_format=16;
+long duration=0L;
+enum AVSampleFormat asf=AV_SAMPLE_FMT_NONE;
 AVFrame *decoded_frame = NULL;
 AVPacket * pkt;
 
 int decoding=0;
 int bufferInSize=0;
 int is_planar=0;
-int sample_rate=44100;
-int channels=2;
-int bit_format=16;
+
 char *pcm_buffer;
 int wave_sample=10;
 unsigned char * wave_buffer;
 int wave_index=0;
-long duration=0L;
+
 int byte_size=0;
 int wave_count=0;
-enum AVSampleFormat asf=AV_SAMPLE_FMT_NONE;
+
 #include <android/log.h>
 #define LOG_TAG "AudioWave"
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR,LOG_TAG ,__VA_ARGS__) // 定义LOGE类型
@@ -56,8 +58,49 @@ int open_coder(AVCodecParameters* parameters){
     return 0;
 }
 
-int parse_info(const char * file_name){
+int parse_info(const char * file_name,struct FFmpegAudioInfo * fFmpegAudioInfo){
     int res=avformat_open_input(&avFormatContext,file_name,NULL,NULL);
+    if (res<0){
+        //无法打开文件
+        LOGE("无法打开文件");
+        return -1;
+    }
+    avformat_find_stream_info(avFormatContext, NULL);
+    int  audio_stream_idx = av_find_best_stream(avFormatContext,
+                                                AVMEDIA_TYPE_AUDIO,
+                                                -1,
+                                                -1,
+                                                NULL,
+                                                0);
+    if (audio_stream_idx<0){
+        //无法找到合适解析的帧
+        LOGE("无法找到合适解析的帧");
+        return -2;
+    }
+
+    //准备开始获取音频信息了
+    AVStream *audio_stream = avFormatContext->streams[audio_stream_idx];
+    open_coder(audio_stream->codecpar);
+    duration=audio_stream->duration*av_q2d(audio_stream->time_base)*1000;
+    channels=audio_stream->codecpar->channels;
+    sample_rate=audio_stream->codecpar->sample_rate;//采样率
+    asf=audio_stream->codecpar->format;
+    bit_format=av_get_bytes_per_sample(audio_stream->codecpar->format)*8;
+    is_planar=av_sample_fmt_is_planar(audio_stream->codecpar->format);//判断是不是
+    fFmpegAudioInfo->bit_format=bit_format;
+    fFmpegAudioInfo->duration=duration;
+    fFmpegAudioInfo->sample_rate=sample_rate;
+    fFmpegAudioInfo->channels=channels;
+    fFmpegAudioInfo->av_fmt=asf;
+    avformat_close_input(&avFormatContext);
+    avformat_free_context(avFormatContext);
+    avFormatContext=NULL;
+    LOGE("sample_rate %d  bit_format %d channels %d is_planar %d  %ld %d %d",sample_rate,bit_format,channels,is_planar,duration,wave_count,byte_size);
+    return 0;
+}
+
+int parse_info_(const char * file){
+    int res=avformat_open_input(&avFormatContext,file,NULL,NULL);
     if (res<0){
         //无法打开文件
         LOGE("无法打开文件");
@@ -311,7 +354,7 @@ unsigned char* decode_wave(const char *file_name,int sample){
     decoding=0;
     bit_format=0;
     asf=AV_SAMPLE_FMT_NONE;
-    int res=parse_info(file_name);
+    int res=parse_info_(file_name);
     if (res<0){
         LOGE("parse info failed");
         return NULL;

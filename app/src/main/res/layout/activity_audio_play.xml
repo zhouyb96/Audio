@@ -44,10 +44,15 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"/>
         <ImageView
+            android:onClick="@{event::onInfo}"
+            android:id="@+id/iv_info"
+            android:src="@drawable/info"
+            android:layout_marginEnd="15dp"
             android:layout_marginStart="15dp"
             android:layout_gravity="center_vertical"
-            android:layout_width="42dp"
-            android:layout_height="42dp"/>
+            android:padding="5dp"
+            android:layout_width="36dp"
+            android:layout_height="36dp"/>
     </LinearLayout>
 
     <TextView

@@ -3,9 +3,14 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="..\:/AndroidWork/Personal/Audio/app/src/main/res/drawable/bg_dd_10.xml" value="0.19895833333333332" />
+        <entry key="..\:/AndroidWork/Personal/Audio/app/src/main/res/drawable/bg_white_10.xml" value="0.19895833333333332" />
         <entry key="..\:/AndroidWork/Personal/Audio/app/src/main/res/layout/activity_audio_crop.xml" value="0.1" />
-        <entry key="..\:/AndroidWork/Personal/Audio/app/src/main/res/layout/activity_audio_play.xml" value="0.16" />
+        <entry key="..\:/AndroidWork/Personal/Audio/app/src/main/res/layout/activity_audio_play.xml" value="0.33" />
+        <entry key="..\:/AndroidWork/Personal/Audio/app/src/main/res/layout/activity_transform.xml" value="0.33" />
         <entry key="..\:/AndroidWork/Personal/Audio/app/src/main/res/layout/activity_vosk.xml" value="0.1" />
+        <entry key="..\:/AndroidWork/Personal/Audio/app/src/main/res/layout/dialog_audio_info.xml" value="0.5" />
+        <entry key="..\:/AndroidWork/Personal/Audio/app/src/main/res/layout/dialog_format_rename.xml" value="0.33" />
         <entry key="..\:/AndroidWork/Personal/Audio/app/src/main/res/layout/fragment_audio.xml" value="0.25" />
         <entry key="..\:/AndroidWork/Personal/Audio/app/src/main/res/layout/fragment_audio_filter.xml" value="0.3319746376811594" />
         <entry key="..\:/AndroidWork/Personal/Audio/app/src/main/res/layout/fragment_filter.xml" value="0.1" />
